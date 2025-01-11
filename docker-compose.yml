@@ -6,7 +6,7 @@ services:
     ports:
       - "${PORT:-3001}:3001"
     environment:
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_TOKEN=MTMwNzM4MzIxMTcxMzg5MjQzMg.GnFY6R.dwvVrJ4AXcZklFTWreFJtCajbOIW0x8zxyTMAQ
       - MONITORED_USERS=762055588762877973
       - REDIS_URL=redis://redis:6379
       - PORT=3001
