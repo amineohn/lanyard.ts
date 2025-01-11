@@ -43,20 +43,22 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     const existingPresence = await presenceStore.getPresence(userId);
     const kv = existingPresence?.kv || [];
     const badges = existingPresence?.badges || [];
-
+    const user = await client.users.fetch(userId);
     const presence = {
+      discord_user: user,
       discord_status: data.status,
       activities: data.activities,
-      active_on_discord_web: data.clientStatus?.desktop === 'online' || false,
-      active_on_discord_desktop: data.clientStatus?.desktop === 'online' || false,
-      active_on_discord_mobile: data.clientStatus?.mobile === 'online' || false,
+      active_on_discord_web: data.clientStatus?.desktop === 'online',
+      active_on_discord_desktop: data.clientStatus?.desktop === 'online',
+      active_on_discord_mobile: data.clientStatus?.mobile === 'online',
       listening_to_spotify: Boolean(spotify),
-      spotify: spotify,
+      spotify: spotify || undefined,
       kv: kv,
       badges: badges,
     };
 
-    await presenceStore.setPresence(userId!, presence as any);
+    // @ts-ignore
+    await presenceStore.setPresence(userId!, presence);
   } catch (error) {
     console.error('Error updating presence:', error);
   }

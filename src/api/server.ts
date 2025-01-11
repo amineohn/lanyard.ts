@@ -25,28 +25,9 @@ fastify.get('/api/health', async () => {
 fastify.get('/api/v1/users/:userId', async (request, reply) => {
   const { userId } = request.params as { userId: string };
   const presence = await presenceStore.getPresence(userId);
-  const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10/users/'
-
-  if (!presence) {
-    reply.code(404).send({ error: 'User not found' });
-    return;
-  }
-
-  const response = await fetch(`${DISCORD_API_ENDPOINT}${userId}`, {
-    headers: {
-      Authorization: `Bot ${'MTMwNzM4MzIxMTcxMzg5MjQzMg.GnFY6R.dwvVrJ4AXcZklFTWreFJtCajbOIW0x8zxyTMAQ'}`,
-    },
-  })
-
-  if (!response.ok) {
-    return { error: 'Failed to fetch Discord profile' }
-  }
-
-  const user = await response.json()
 
   return {presence : {
       ...presence,
-      discord_user: user,
     }};
 });
 
@@ -66,7 +47,7 @@ fastify.post('/api/v1/users/:userId/kv', async (request, reply) => {
 
 // WebSocket endpoint for real-time updates
 fastify.register(async function (fastify) {
-  fastify.get('/api/v1/socket', { websocket: true }, (connection, req) => {
+  fastify.get('/socket', { websocket: true }, (connection, req) => {
     const { socket } = connection;
 
     const subscriber = (userId: string, presence: any) => {
@@ -81,17 +62,34 @@ fastify.register(async function (fastify) {
     socket.on('message', async (message) => {
       try {
         const { op, d } = JSON.parse(message.toString());
-        
+
         switch (op) {
-          case 1: // Subscribe to specific users
+          case 1:
+            if (Array.isArray(d)) {
+              d.forEach(() => {
+                presenceStore.subscribe((userId, presence) => {
+                  socket.send(JSON.stringify({
+                    op: 0,
+                    d: { userId: userId, ...presence }
+                  }));
+                });
+              });
+            } else {
+              socket.send(JSON.stringify({
+                op: -1,
+                d: {error: 'Invalid op code'}
+              }));
+            }
+            break;
+          case 2:
             if (Array.isArray(d)) {
               const presences = await Promise.all(
-                d.map(async (userId) => {
-                  const presence = await presenceStore.getPresence(userId);
-                  return { userId, presence };
-                })
+                  d.map(async (userId) => {
+                    const presence = await presenceStore.getPresence(userId);
+                    return { userId, presence };
+                  })
               );
-              
+
               presences.forEach(({ userId, presence }) => {
                 if (presence) {
                   socket.send(JSON.stringify({
@@ -102,7 +100,11 @@ fastify.register(async function (fastify) {
               });
             }
             break;
-          
+
+          case 3:
+            socket.send(JSON.stringify({ op: 3, d: { status: 'ok' } }));
+            break;
+
           default:
             socket.send(JSON.stringify({
               op: -1,
