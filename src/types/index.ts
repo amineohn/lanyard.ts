@@ -13,9 +13,7 @@ export interface KV {
   key: string;
   value: string;
 }
-
 export interface Activity {
-  syncId: string;
   name: string;
   type: number;
   url?: string;
@@ -43,8 +41,13 @@ export interface Activity {
     small_text?: string;
   };
   spotify: {
-    largeImage: string;
-    largeText: string;
+    track_id: string;
+    timestamps: Timestamps;
+    song: string;
+    artist: string;
+    sync_id: string;
+    large_image: string;
+    large_text: string;
   }
   secrets?: {
     join?: string;
@@ -54,6 +57,13 @@ export interface Activity {
   instance?: boolean;
   flags?: number;
   buttons?: string[];
+  createdAt?: Date;
+
+}
+
+export interface Timestamps {
+  start: number;
+  end: number;
 }
 
 export interface Presence {

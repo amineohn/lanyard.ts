@@ -1,82 +1,87 @@
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { presenceStore } from '../store/presence';
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ColorResolvable
+} from 'discord.js';
+import {presenceStore} from "../store/presence";
 
 export const commands = [
   new SlashCommandBuilder()
-    .setName('subscribe')
-    .setDescription('Subscribe to presence updates for a user')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('The user to subscribe to')
-        .setRequired(true)
-    ),
-  
-  new SlashCommandBuilder()
-    .setName('unsubscribe')
-    .setDescription('Unsubscribe from presence updates for a user')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('The user to unsubscribe from')
-        .setRequired(true)
-    ),
-    
-  new SlashCommandBuilder()
-    .setName('status')
-    .setDescription('Get current status of the bot'),
+      .setName('subscribe')
+      .setDescription('Subscribe to presence updates for a user')
+      .addUserOption(option =>
+          option
+              .setName('user')
+              .setDescription('The user to subscribe to')
+              .setRequired(true)
+      ),
 
   new SlashCommandBuilder()
-    .setName('kv')
-    .setDescription('Manage key-value pairs')
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('set')
-        .setDescription('Set a key-value pair')
-        .addStringOption(option =>
+      .setName('unsubscribe')
+      .setDescription('Unsubscribe from presence updates for a user')
+      .addUserOption(option =>
           option
-            .setName('key')
-            .setDescription('The key to set')
-            .setRequired(true)
-        )
-        .addStringOption(option =>
-          option
-            .setName('value')
-            .setDescription('The value to set')
-            .setRequired(true)
-        )
-    )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('get')
-        .setDescription('Get a value by key')
-        .addStringOption(option =>
-          option
-            .setName('key')
-            .setDescription('The key to get')
-            .setRequired(true)
-        )
-    )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('delete')
-        .setDescription('Delete a key-value pair')
-        .addStringOption(option =>
-          option
-            .setName('key')
-            .setDescription('The key to delete')
-            .setRequired(true)
-        )
-    )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('list')
-        .setDescription('List all key-value pairs')
-    ),
+              .setName('user')
+              .setDescription('The user to unsubscribe from')
+              .setRequired(true)
+      ),
+
+  new SlashCommandBuilder()
+      .setName('status')
+      .setDescription('Get current status of the bot'),
+
+  new SlashCommandBuilder()
+      .setName('kv')
+      .setDescription('Manage key-value pairs')
+      .addSubcommand(subcommand =>
+          subcommand
+              .setName('set')
+              .setDescription('Set a key-value pair')
+              .addStringOption(option =>
+                  option
+                      .setName('key')
+                      .setDescription('The key to set')
+                      .setRequired(true)
+              )
+              .addStringOption(option =>
+                  option
+                      .setName('value')
+                      .setDescription('The value to set')
+                      .setRequired(true)
+              )
+      )
+      .addSubcommand(subcommand =>
+          subcommand
+              .setName('get')
+              .setDescription('Get a value by key')
+              .addStringOption(option =>
+                  option
+                      .setName('key')
+                      .setDescription('The key to get')
+                      .setRequired(true)
+              )
+      )
+      .addSubcommand(subcommand =>
+          subcommand
+              .setName('delete')
+              .setDescription('Delete a key-value pair')
+              .addStringOption(option =>
+                  option
+                      .setName('key')
+                      .setDescription('The key to delete')
+                      .setRequired(true)
+              )
+      )
+      .addSubcommand(subcommand =>
+          subcommand
+              .setName('list')
+              .setDescription('List all key-value pairs')
+      ),
 ].map(command => command.toJSON());
 
-export async function handleCommand(interaction: CommandInteraction) {
-  if (!interaction.isCommand()) return;
+export async function handleCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+  const userId = interaction.user.id;
 
   switch (interaction.commandName) {
     case 'subscribe': {
@@ -120,11 +125,10 @@ export async function handleCommand(interaction: CommandInteraction) {
       const monitoredUsers = process.env.MONITORED_USERS?.split(',') || [];
       const userCount = monitoredUsers.length;
       const uptime = Math.floor(process.uptime());
-      
-      await interaction.reply({
-        embeds: [{
-          title: 'Lanyard Status',
-          fields: [
+
+      const embed = new EmbedBuilder()
+          .setTitle('Lanyard Status')
+          .addFields([
             {
               name: 'Monitored Users',
               value: userCount.toString(),
@@ -135,33 +139,32 @@ export async function handleCommand(interaction: CommandInteraction) {
               value: `${uptime}s`,
               inline: true
             }
-          ],
-          color: 0x00ff00,
-          timestamp: new Date().toISOString()
-        }]
-      });
+          ])
+          .setColor('#00ff00' as ColorResolvable)
+          .setTimestamp();
+
+      await interaction.reply({ embeds: [embed] });
       break;
     }
 
     case 'kv': {
       const subcommand = interaction.options.getSubcommand();
-      const userId = interaction.user.id;
-      
+
       switch (subcommand) {
         case 'set': {
           const key = interaction.options.getString('key', true);
           const value = interaction.options.getString('value', true);
-          
+
           await presenceStore.setKV(userId, key, value);
           await interaction.reply(`Set ${key}=${value}`);
           break;
         }
-        
+
         case 'get': {
           const key = interaction.options.getString('key', true);
           const presence = await presenceStore.getPresence(userId);
           const kv = presence?.kv?.find(item => item.key === key);
-          
+
           if (kv) {
             await interaction.reply(`${key}=${kv.value}`);
           } else {
@@ -169,11 +172,11 @@ export async function handleCommand(interaction: CommandInteraction) {
           }
           break;
         }
-        
+
         case 'delete': {
           const key = interaction.options.getString('key', true);
           const presence = await presenceStore.getPresence(userId);
-          
+
           if (presence?.kv) {
             presence.kv = presence.kv.filter(item => item.key !== key);
             await presenceStore.setPresence(userId, presence);
@@ -183,11 +186,11 @@ export async function handleCommand(interaction: CommandInteraction) {
           }
           break;
         }
-        
+
         case 'list': {
           const presence = await presenceStore.getPresence(userId);
           const kv = presence?.kv || [];
-          
+
           if (kv.length > 0) {
             const kvList = kv.map(item => `${item.key}=${item.value}`).join('\n');
             await interaction.reply(`Key-Value pairs:\n\`\`\`\n${kvList}\n\`\`\``);
