@@ -42,8 +42,32 @@ gateway.on('presenceUpdate', async (data: Presence) => {
 
     const existingPresence = await presenceStore.getPresence(userId);
     const kv = existingPresence?.kv || [];
-    const badges = existingPresence?.badges || [];
     const user = await client.users.fetch(userId);
+
+    const FLAG_STAFF = 1 << 0; // 1
+    const FLAG_PARTNER = 1 << 1; // 2
+    const FLAG_HYPESQUAD = 1 << 2; // 4
+    const FLAG_BUGHUNTER = 1 << 3; // 8
+    const FLAG_HYPESQUAD_EVENTS = 1 << 6; // 64
+    const FLAG_PREFERRED_LANGUAGE = 1 << 7; // 128
+    const FLAG_NOTIFICATIONS = 1 << 8; // 256
+
+    const resolveFlags = (flags: number): string[] => {
+      const badgeList: string[] = [];
+
+      if (flags & FLAG_STAFF) badgeList.push('STAFF');
+      if (flags & FLAG_PARTNER) badgeList.push('PARTNER');
+      if (flags & FLAG_HYPESQUAD) badgeList.push('HYPESQUAD');
+      if (flags & FLAG_BUGHUNTER) badgeList.push('BUGHUNTER');
+      if (flags & FLAG_HYPESQUAD_EVENTS) badgeList.push('HYPESQUAD_EVENTS');
+      if (flags & FLAG_PREFERRED_LANGUAGE) badgeList.push('PREFERRED_LANGUAGE');
+      if (flags & FLAG_NOTIFICATIONS) badgeList.push('NOTIFICATIONS');
+
+      return badgeList;
+    };
+
+    const flags = user.flags ? user.flags.bitfield : 0;
+    const badges = resolveFlags(flags);
     const presence = {
       discord_user: user,
       discord_status: data.status,
