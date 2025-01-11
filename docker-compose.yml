@@ -8,7 +8,7 @@ services:
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - MONITORED_USERS=762055588762877973
-      - REDIS_URL=redis://127.0.0.1:6379
+      - REDIS_URL=redis://redis:6379
       - PORT=3001
     depends_on:
       - redis
