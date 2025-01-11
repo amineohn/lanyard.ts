@@ -4,10 +4,10 @@ services:
   app:
     build: .
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3001}:3001"
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - MONITORED_USERS=${MONITORED_USERS}
+      - MONITORED_USERS=762055588762877973
       - REDIS_URL=redis://redis:6379
       - PORT=3001
     depends_on:
