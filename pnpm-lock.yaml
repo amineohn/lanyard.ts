@@ -23,6 +23,9 @@ importers:
       redis:
         specifier: ^4.6.11
         version: 4.7.0
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@types/node':
         specifier: ^20.9.1
