@@ -35,7 +35,6 @@ gateway.on('presenceUpdate', async (data: Presence) => {
   if (!config.discord.monitoredUsers.includes(userId!)) {
     return;
   }
-
   try {
     const spotifyActivity = data.activities.find((activity: { type: number; }) => activity.type === 2);
     const spotify = spotifyActivity ? parseSpotifyActivity(spotifyActivity as any) : undefined;
@@ -44,22 +43,15 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     const kv = existingPresence?.kv || [];
     const badges = existingPresence?.badges || [];
     const presence = {
-      discord_user: {
-        id: userId,
-        username: data.user?.username,
-        discriminator: data.user?.discriminator,
-        avatar: data.user?.avatar,
-        global_name: data.user?.globalName,
-      },
       discord_status: data.status,
       activities: data.activities,
       active_on_discord_web: data.clientStatus?.web === 'online',
       active_on_discord_desktop: data.clientStatus?.desktop === 'online',
       active_on_discord_mobile: data.clientStatus?.mobile === 'online',
       listening_to_spotify: Boolean(spotify),
-      spotify,
-      kv,
-      badges
+      spotify: spotify,
+      kv: kv,
+      badges: badges
     };
 
     await presenceStore.setPresence(userId!, presence as any);

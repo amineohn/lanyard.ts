@@ -26,13 +26,29 @@ fastify.get('/api/health', async () => {
 fastify.get('/api/v1/users/:userId', async (request, reply) => {
   const { userId } = request.params as { userId: string };
   const presence = await presenceStore.getPresence(userId);
-  
+  const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10/users/'
+
   if (!presence) {
     reply.code(404).send({ error: 'User not found' });
     return;
   }
 
-  return presence;
+  const response = await fetch(`${DISCORD_API_ENDPOINT}${userId}`, {
+    headers: {
+      Authorization: `Bot ${'MTMwNzM4MzIxMTcxMzg5MjQzMg.GnFY6R.dwvVrJ4AXcZklFTWreFJtCajbOIW0x8zxyTMAQ'}`,
+    },
+  })
+
+  if (!response.ok) {
+    return { error: 'Failed to fetch Discord profile' }
+  }
+
+  const user = await response.json()
+
+  return {presence : {
+      ...presence,
+      discord_user: user,
+    }};
 });
 
 // KV store endpoints

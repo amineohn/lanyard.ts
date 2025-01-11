@@ -66,7 +66,7 @@ export interface Timestamps {
   end: number;
 }
 
-export interface Presence {
+  export interface Presence {
   discord_user: User;
   discord_status: PresenceStatus;
   activities: Activity[];
