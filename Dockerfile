@@ -15,9 +15,6 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of your app's source code
 COPY . .
 
-# Copy .env file into the container (ensure .env is present in your local project root)
-COPY .env .env
-
 RUN pnpm run build
 
 ENV NODE_ENV=production
