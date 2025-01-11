@@ -10,6 +10,4 @@ services:
       - MONITORED_USERS=762055588762877973
       - REDIS_URL=redis://85.215.225.50:6379
       - PORT=3001
-    depends_on:
-      - redis
     restart: unless-stopped
