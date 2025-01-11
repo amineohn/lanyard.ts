@@ -1,10 +1,10 @@
 import { createClient } from 'redis';
 import { config } from '../config';
-import { KV, Presence } from '../types';
+import {LanyardData} from "../types";
 
 class PresenceStore {
   private client;
-  private subscribers: Set<(userId: string, presence: Presence) => void>;
+  private subscribers: Set<(userId: string, presence: LanyardData) => void>;
 
   constructor() {
     this.client = createClient({
@@ -14,12 +14,12 @@ class PresenceStore {
     this.client.connect();
   }
 
-  async setPresence(userId: string, presence: Presence): Promise<void> {
+  async setPresence(userId: string, presence: LanyardData): Promise<void> {
     await this.client.set(`presence:${userId}`, JSON.stringify(presence));
     this.notifySubscribers(userId, presence);
   }
 
-  async getPresence(userId: string): Promise<Presence | null> {
+  async getPresence(userId: string): Promise<LanyardData | null> {
     const data = await this.client.get(`presence:${userId}`);
     return data ? JSON.parse(data) : null;
   }
@@ -28,28 +28,22 @@ class PresenceStore {
     const presence = await this.getPresence(userId);
     if (!presence) return;
 
-    const kv = presence.kv || [];
-    const existingIndex = kv.findIndex(item => item.key === key);
-    
-    if (existingIndex !== -1) {
-      kv[existingIndex].value = value;
-    } else {
-      kv.push({ key, value });
-    }
-
+    const kv = presence.kv || {};
+    kv[key] = value;
     presence.kv = kv;
+
     await this.setPresence(userId, presence);
   }
 
-  async subscribe(callback: (userId: string, presence: Presence) => void): Promise<void> {
+  async subscribe(callback: (userId: string, presence: LanyardData) => void): Promise<void> {
     this.subscribers.add(callback);
   }
 
-  async unsubscribe(callback: (userId: string, presence: Presence) => void): Promise<void> {
+  async unsubscribe(callback: (userId: string, presence: LanyardData) => void): Promise<void> {
     this.subscribers.delete(callback);
   }
 
-  private notifySubscribers(userId: string, presence: Presence): void {
+  private notifySubscribers(userId: string, presence: LanyardData): void {
     this.subscribers.forEach(callback => {
       try {
         callback(userId, presence);

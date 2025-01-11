@@ -1,8 +1,8 @@
 import {Client, GatewayIntentBits, Presence} from 'discord.js';
-import {config } from '../config';
 import {presenceStore} from '../store/presence';
 import {GatewayClient} from '../gateway/client';
 import {Activity} from "../types";
+import {config} from "../config";
 
 const client = new Client({
   intents: [
@@ -16,42 +16,44 @@ const client = new Client({
 
 const gateway = new GatewayClient();
 function parseSpotifyActivity(activity: Activity) {
-  if (activity.type !== 2 || !activity.application_id) return null;
+  if (activity?.type !== 2 || !activity.id) return undefined;
 
   return {
-    track_id: activity.spotify.track_id,
-    timestamps: activity.spotify.timestamps,
-    album: activity.spotify.large_text || '',
-    album_art_url: activity.spotify.large_image
-      ? `https://i.scdn.co/image/${activity.spotify.large_image.replace('spotify:', '')}`
-      : '',
-    artist: activity.spotify.artist || '',
-    song: activity.spotify.song || '',
+    track_id: activity.id,
+    timestamps: activity.timestamps,
+    album: activity.assets?.large_text || '',
+    album_art_url: activity.assets?.large_image
+        ? `https://i.scdn.co/image/${activity.assets?.large_image.replace('spotify:', '')}`
+        : '',
+    artist: activity?.name || '',
+    song: activity?.details || '',
   };
 }
 
+
 gateway.on('presenceUpdate', async (data: Presence) => {
-  const userId = data.user?.id;
-  if (!config.discord.monitoredUsers.includes(userId!)) {
+  const userId = data.user?.id!;
+  if (!config.discord.monitoredUsers.includes(userId)) {
     return;
   }
   try {
-    const spotifyActivity = data.activities.find((activity: { type: number; }) => activity.type === 2);
-    const spotify = spotifyActivity ? parseSpotifyActivity(spotifyActivity as any) : undefined;
+    const spotifyActivity = data.activities.find((activity) => activity?.type === 2);
+    const spotify = parseSpotifyActivity(spotifyActivity as any);
 
-    const existingPresence = await presenceStore.getPresence(userId!);
+    const existingPresence = await presenceStore.getPresence(userId);
     const kv = existingPresence?.kv || [];
     const badges = existingPresence?.badges || [];
+
     const presence = {
       discord_status: data.status,
       activities: data.activities,
-      active_on_discord_web: data.clientStatus?.web === 'online',
-      active_on_discord_desktop: data.clientStatus?.desktop === 'online',
-      active_on_discord_mobile: data.clientStatus?.mobile === 'online',
+      active_on_discord_web: data.clientStatus?.desktop === 'online' || false,
+      active_on_discord_desktop: data.clientStatus?.desktop === 'online' || false,
+      active_on_discord_mobile: data.clientStatus?.mobile === 'online' || false,
       listening_to_spotify: Boolean(spotify),
       spotify: spotify,
       kv: kv,
-      badges: badges
+      badges: badges,
     };
 
     await presenceStore.setPresence(userId!, presence as any);
@@ -59,6 +61,7 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     console.error('Error updating presence:', error);
   }
 });
+
 
 gateway.on('ready', (data: Presence) => {
   console.log(`Gateway ready! Connected as ${data.user?.username}`);

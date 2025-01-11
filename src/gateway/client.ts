@@ -150,8 +150,8 @@ export class GatewayClient extends EventEmitter {
         intents: 1 << 8, // GUILD_PRESENCES
         properties: {
           os: 'linux',
-          browser: 'lanyard',
-          device: 'lanyard'
+          browser: 'lanyard-ts',
+          device: 'lanyard-ts'
         },
         presence: {
           status: 'online',

@@ -143,7 +143,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
           .setColor('#00ff00' as ColorResolvable)
           .setTimestamp();
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.reply({embeds: [embed]});
       break;
     }
 
@@ -163,10 +163,10 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
         case 'get': {
           const key = interaction.options.getString('key', true);
           const presence = await presenceStore.getPresence(userId);
-          const kv = presence?.kv?.find(item => item.key === key);
+          const kv = presence?.kv || {};
 
-          if (kv) {
-            await interaction.reply(`${key}=${kv.value}`);
+          if (kv[key]) {
+            await interaction.reply(`${key}=${kv[key]}`);
           } else {
             await interaction.reply(`Key "${key}" not found`);
           }
@@ -178,7 +178,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
           const presence = await presenceStore.getPresence(userId);
 
           if (presence?.kv) {
-            presence.kv = presence.kv.filter(item => item.key !== key);
+            delete presence.kv[key];
             await presenceStore.setPresence(userId, presence);
             await interaction.reply(`Deleted key "${key}"`);
           } else {
@@ -189,10 +189,10 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
 
         case 'list': {
           const presence = await presenceStore.getPresence(userId);
-          const kv = presence?.kv || [];
+          const kv = presence?.kv || {}; // Ensure kv is an object
 
-          if (kv.length > 0) {
-            const kvList = kv.map(item => `${item.key}=${item.value}`).join('\n');
+          if (Object.keys(kv).length > 0) {
+            const kvList = Object.entries(kv).map(([key, value]) => `${key}=${value}`).join('\n');
             await interaction.reply(`Key-Value pairs:\n\`\`\`\n${kvList}\n\`\`\``);
           } else {
             await interaction.reply('No key-value pairs found');
@@ -200,7 +200,6 @@ export async function handleCommand(interaction: ChatInputCommandInteraction): P
           break;
         }
       }
-      break;
     }
   }
 }
