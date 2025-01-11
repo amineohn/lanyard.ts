@@ -5,8 +5,8 @@ import { config } from './config';
 async function main() {
   try {
     await client.login(config.discord.token);
-    await server.listen({ port: config.api.port });
-    
+    await server.listen({ port: config.api.port, host: '0.0.0.0' });
+
     console.log(`Server listening on port ${config.api.port}`);
   } catch (error) {
     console.error('Failed to start:', error);

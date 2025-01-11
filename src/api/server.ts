@@ -1,6 +1,5 @@
 import Fastify from 'fastify';
 import fastifyWebsocket from '@fastify/websocket';
-import { config } from '../config';
 import { presenceStore } from '../store/presence';
 
 const fastify = Fastify({
