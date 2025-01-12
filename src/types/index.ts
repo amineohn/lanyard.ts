@@ -1,28 +1,11 @@
-import { PresenceStatus } from 'discord.js';
-
-export interface LanyardOptions {
-  userId: string | string[];
-  socket?: boolean;
-  apiUrl?: string;
-}
-
-export interface LanyardResponse {
-  success: boolean;
-  data: LanyardData;
-  error?: LanyardError;
-}
-
-export interface LanyardError {
-  message: string;
-  code: string;
-}
+import {UserFlagsBitField} from 'discord.js';
 
 export interface LanyardData {
-  spotify?: Spotify;
+  spotify: Spotify | null;
   listening_to_spotify: boolean;
   discord_user?: DiscordUser;
-  discord_status: "online" | "idle" | "dnd" | "offline";
-  kv?: Kv;
+  discord_status: "online" | "idle" | "dnd" | "invisible";
+  kv: Kv;
   badges: string[]
   activities: Activity[];
   active_on_discord_web: boolean;
@@ -43,21 +26,16 @@ export interface Spotify {
   album: string;
 }
 
-export interface Timestamps {
-  start: number;
-  end: number;
-}
-
 export interface Activity {
   type: number;
-  state: string;
+  state: string | null;
   name: string;
   id?: string;
   flags?: number;
   emoji?: Emoji;
   created_at?: number;
   application_id?: string;
-  timestamps?: Timestamps;
+  timestamps: Timestamps;
   sync_id?: string;
   session_id?: string;
   party?: Party;
@@ -79,7 +57,8 @@ export interface Assets {
 }
 
 export interface Timestamps {
-  start: number;
+  start: number | null
+  end?: number | null
 }
 
 export interface Emoji {
@@ -89,16 +68,16 @@ export interface Emoji {
 }
 
 export interface DiscordUser {
-  username: string;
-  global_name: string | null;
-  public_flags: number;
-  id: string;
-  discriminator: string;
+  username: string | undefined
+  globalName: string | undefined;
+  flags?: Readonly<UserFlagsBitField>
+  id: string | undefined;
+  discriminator: string | undefined;
   bot: boolean;
-  avatar: string;
+  avatar: string | undefined;
   avatar_decoration_data?: {
-    sku_id: string;
-    asset: string;
+    sku_id: string | undefined;
+    asset: string | undefined;
     expires_at: number;
   } | null;
 }
