@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "ts-node src/api/refresh-slash-commands.ts",
+    "postinstall": "pnpm install -g ts-node && ts-node src/api/refresh-slash-commands.ts",
     "dev": "ts-node-dev --respawn src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
