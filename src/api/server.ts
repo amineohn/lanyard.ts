@@ -20,11 +20,14 @@ fastify.addHook('onRequest', (request, reply, done) => {
 fastify.get('/api/health', async () => {
   return { status: 'ok' };
 });
+
+// REST endpoint for getting / route.
 fastify.get('/', (request, reply) => {
   return {
     message: "Hello! If you'd like to use my API, feel free to DM me on Discord at kanjo.app. This API is a TypeScript rewrite of Lanyard by KANJO, inspired by the original Lanyard created by Phineas.",
   };
 })
+
 // REST endpoint for getting presence
 fastify.get('/api/v1/users/:userId', async (request, reply) => {
   const { userId } = request.params as { userId: string };

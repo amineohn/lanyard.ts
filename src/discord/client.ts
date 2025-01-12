@@ -1,8 +1,9 @@
-import {Client, GatewayIntentBits, Presence} from 'discord.js';
+import {Client, GatewayIntentBits, Interaction, Presence} from 'discord.js';
 import {presenceStore} from '../store/presence';
 import {GatewayClient} from '../gateway/client';
 import {Activity} from "../types";
 import {config} from "../config";
+import {handleCommand} from "./commands";
 
 const client = new Client({
   intents: [
@@ -30,6 +31,26 @@ function parseSpotifyActivity(activity: Activity) {
   };
 }
 
+
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user?.tag}!`);
+});
+
+client.on('interactionCreate', async (interaction: Interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  try {
+    await handleCommand(interaction);
+  } catch (error) {
+    console.error('Error handling command:', error);
+    if (interaction.isRepliable()) {
+      await interaction.reply({
+        content: 'There was an error processing your command.',
+        ephemeral: true,
+      });
+    }
+  }
+});
 
 gateway.on('presenceUpdate', async (data: Presence) => {
   const userId = data.user?.id!;
@@ -68,11 +89,12 @@ gateway.on('presenceUpdate', async (data: Presence) => {
 
     const flags = user.flags ? user.flags.bitfield : 0;
     const badges = resolveFlags(flags);
+
     const presence = {
       discord_user: user,
       discord_status: data.status,
       activities: data.activities,
-      active_on_discord_web: data.clientStatus?.desktop === 'online',
+      active_on_discord_web: data.clientStatus?.web === 'online',
       active_on_discord_desktop: data.clientStatus?.desktop === 'online',
       active_on_discord_mobile: data.clientStatus?.mobile === 'online',
       listening_to_spotify: Boolean(spotify),
@@ -87,8 +109,6 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     console.error('Error updating presence:', error);
   }
 });
-
-
 gateway.on('ready', (data: Presence) => {
   console.log(`Gateway ready! Connected as ${data.user?.username}`);
 });
