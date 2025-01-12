@@ -55,7 +55,7 @@ fastify.post('/api/v1/users/:userId/kv', async (request, reply) => {
 // WebSocket endpoint for real-time updates
 fastify.register(async function (fastify) {
   fastify.get('/socket', { websocket: true }, (connection, req) => {
-    const { socket } = connection;
+    const socket = connection;
 
     const subscriber = (userId: string, presence: any) => {
       socket.send(JSON.stringify({

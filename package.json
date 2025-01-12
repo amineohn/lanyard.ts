@@ -9,17 +9,17 @@
     "refresh": "node dist/api/refresh-slash-commands.js"
   },
   "dependencies": {
-    "@fastify/websocket": "^8.2.0",
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1",
-    "fastify": "^4.24.3",
-    "redis": "^4.6.11",
+    "@fastify/websocket": "^11.0.2",
+    "discord.js": "^14.17.3",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "redis": "^4.7.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^20.9.1",
-    "@types/ws": "^8.5.9",
+    "@types/node": "^22.10.5",
+    "@types/ws": "^8.5.13",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.7.3"
   }
 }
