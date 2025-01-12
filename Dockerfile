@@ -1,8 +1,8 @@
 # Use the official Node 20 image based on Alpine Linux
 FROM node:20-alpine
 
-# Install pnpm and tsx globally
-RUN npm install -g pnpm tsx
+# Install pnpm, tsx, and ts-node globally
+RUN npm install -g pnpm tsx ts-node
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -21,6 +21,9 @@ COPY .env .env
 
 # Run the build command (assuming you have a "build" script in your package.json)
 RUN pnpm run build
+
+# Execute the refresh-slash-commands.ts script (to refresh slash commands)
+RUN ts-node src/api/refresh-slash-commands.ts
 
 # Set the environment variable to "production"
 ENV NODE_ENV=production
