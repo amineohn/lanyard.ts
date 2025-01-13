@@ -16,8 +16,10 @@ const client = new Client({
 });
 
 const gateway = new GatewayClient();
+
 function parseSpotifyActivity(activity: Activity) {
   if (activity?.type !== 2 || !activity.id) return undefined;
+
   const timestamps: Timestamps = {
     start: activity.timestamps?.start ?? null,
     end: activity.timestamps?.end ?? null,
@@ -62,7 +64,7 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     return;
   }
   try {
-    const spotifyActivity = data.activities.find((activity) => activity?.type === 2) as unknown as Activity;
+    const spotifyActivity = data.activities.find((activity) => activity.type === 2) as unknown as Activity;
     if (!spotifyActivity) {
       return;
     }
@@ -72,15 +74,7 @@ gateway.on('presenceUpdate', async (data: Presence) => {
     const kv = existingPresence?.kv || [];
     const user = await client.users.fetch(userId)
 
-    const FLAG_STAFF = 1 << 0; // 1
-    const FLAG_PARTNER = 1 << 1; // 2
-    const FLAG_HYPESQUAD = 1 << 2; // 4
-    const FLAG_BUGHUNTER = 1 << 3; // 8
-    const FLAG_HYPESQUAD_EVENTS = 1 << 6; // 64
-    const FLAG_PREFERRED_LANGUAGE = 1 << 7; // 128
-    const FLAG_NOTIFICATIONS = 1 << 8; // 256
-
-    const resolveFlags = (flags: number, premiumType: number): string[] => {
+    const resolveFlags = (flags: number) => {
       const badgeList: string[] = [];
 
       const FLAG_STAFF = 1 << 0; // 1
@@ -99,17 +93,12 @@ gateway.on('presenceUpdate', async (data: Presence) => {
       if (flags & FLAG_PREFERRED_LANGUAGE) badgeList.push('PREFERRED_LANGUAGE');
       if (flags & FLAG_NOTIFICATIONS) badgeList.push('NOTIFICATIONS');
 
-      if (premiumType === 1) badgeList.push('NITRO_CLASSIC');
-      if (premiumType === 2) badgeList.push('NITRO_FULL');
-
       return badgeList;
     };
 
     const flags = user.flags || new UserFlagsBitField(0);
 
-    // @ts-ignore
-    const premiumType = user.premium_type || 0;
-    const badges = resolveFlags(flags.bitfield, premiumType);
+    const badges = resolveFlags(flags.bitfield);
 
     const discordUser = {
       username: user.username ?? '',
@@ -128,7 +117,7 @@ gateway.on('presenceUpdate', async (data: Presence) => {
       discord_user: discordUser,
       discord_status: status,
       activities: data.activities as unknown as Activity[],
-      spotify: spotify || null,
+      spotify: spotify,
       listening_to_spotify: Boolean(spotify),
       active_on_discord_web: data.clientStatus?.web === 'online',
       active_on_discord_desktop: data.clientStatus?.desktop === 'online',
