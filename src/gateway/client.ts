@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import { config } from '../config';
+import {Logger} from "../utility/logger";
 
 const DISCORD_GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json';
 const HEARTBEAT_INTERVAL = 41250; // Discord recommended heartbeat interval
@@ -31,7 +32,7 @@ export class GatewayClient extends EventEmitter {
       this.ws = new WebSocket(this.resumeGatewayUrl || DISCORD_GATEWAY_URL);
       this.setupWebSocketHandlers();
     } catch (error) {
-      console.error('Failed to connect to gateway:', error);
+      Logger.error(`Failed to connect to gateway: ${error}`);
       this.handleReconnect();
     }
   }
@@ -40,7 +41,7 @@ export class GatewayClient extends EventEmitter {
     if (!this.ws) return;
 
     this.ws.on('open', () => {
-      console.log('Connected to Discord Gateway');
+      Logger.success('Connected to Discord Gateway');
       if (this.sessionId && this.sequence && this.resumeGatewayUrl) {
         this.resume();
       } else {
@@ -53,18 +54,18 @@ export class GatewayClient extends EventEmitter {
         const payload: GatewayPayload = JSON.parse(data.toString());
         this.handlePayload(payload);
       } catch (error) {
-        console.error('Failed to parse gateway message:', error);
+        Logger.error(`Failed to parse gateway message: ${error}`);
       }
     });
 
     this.ws.on('close', (code: number) => {
-      console.log(`Gateway connection closed with code ${code}`);
+      Logger.error(`Gateway connection closed with code ${code}`);
       this.cleanup();
       this.handleReconnect();
     });
 
     this.ws.on('error', (error: Error) => {
-      console.error('Gateway WebSocket error:', error);
+      Logger.error(`Gateway WebSocket error: ${error}`)
       this.cleanup();
       this.handleReconnect();
     });
@@ -81,7 +82,7 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 11: // Heartbeat ACK
-        console.log('Heartbeat acknowledged');
+        Logger.warn('Heartbeat acknowledged');
         break;
 
       case 0: // Dispatch
@@ -89,12 +90,12 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 7: // Reconnect
-        console.log('Gateway requested reconnect');
+        Logger.warn('Gateway requested reconnect');
         this.reconnect();
         break;
 
       case 9: // Invalid Session
-        console.log('Invalid session, reidentifying...');
+        Logger.warn('Invalid session, reidentifying...');
         this.sessionId = null;
         this.identify();
         break;
@@ -110,7 +111,7 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 'RESUMED':
-        console.log('Session resumed successfully');
+        Logger.success('Session resumed successfully');
         break;
 
       case 'PRESENCE_UPDATE':
@@ -193,13 +194,13 @@ export class GatewayClient extends EventEmitter {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
-      console.log(`Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      Logger.warn(`Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
       
       setTimeout(() => {
         this.connect();
       }, delay);
     } else {
-      console.error('Max reconnection attempts reached');
+      Logger.error('Max reconnection attempts reached');
       process.exit(1);
     }
   }

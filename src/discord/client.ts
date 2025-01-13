@@ -4,6 +4,7 @@ import {GatewayClient} from '../gateway/client';
 import {Activity, DiscordUser, Kv, LanyardData, Timestamps} from "../types";
 import {config} from "../config";
 import {handleCommand} from "./commands";
+import {Logger} from "../utility/logger";
 
 const client = new Client({
   intents: [
@@ -39,7 +40,7 @@ function parseSpotifyActivity(activity: Activity) {
 
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user?.tag}!`);
+  Logger.success(`Logged in as ${client.user?.tag}!`);
 });
 
 client.on('interactionCreate', async (interaction: Interaction) => {
@@ -48,7 +49,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   try {
     await handleCommand(interaction);
   } catch (error) {
-    console.error('Error handling command:', error);
+    Logger.error(`Error handling command: ${error}`);
     if (interaction.isRepliable()) {
       await interaction.reply({
         content: 'There was an error processing your command.',
@@ -128,12 +129,12 @@ gateway.on('presenceUpdate', async (data: Presence) => {
 
     await presenceStore.setPresence(userId, presence);
   } catch (error) {
-    console.error('Error updating presence:', error);
+    Logger.error(`Error updating presence: ${error}`);
   }
 });
 
 gateway.on('ready', (data: Presence) => {
-  console.log(`Gateway ready! Connected as ${data.user?.username}`);
+  Logger.success(`Gateway ready! Connected as ${data.user?.username}`);
 });
 
 process.on('SIGINT', () => {

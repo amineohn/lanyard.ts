@@ -1,13 +1,13 @@
 import {UserFlagsBitField} from 'discord.js';
 
 export interface LanyardData {
-  spotify: Spotify | null;
-  listening_to_spotify: boolean;
   discord_user?: DiscordUser;
   discord_status: "online" | "idle" | "dnd" | "invisible";
-  kv: Kv;
   badges: string[]
   activities: Activity[];
+  kv: Kv;
+  spotify: Spotify | null;
+  listening_to_spotify: boolean;
   active_on_discord_web: boolean;
   active_on_discord_mobile: boolean;
   active_on_discord_desktop: boolean;
