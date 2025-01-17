@@ -11,19 +11,19 @@ RUN npm install -g pnpm tsx tsconfig-replace-paths
 COPY package.json pnpm-lock.yaml ./
 
 # Install the dependencies using pnpm
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Copy all source files
 COPY . .
 
 # Replace paths using tsconfig-replace-paths
-RUN tsconfig-replace-paths ./tsconfig.json ./src
+RUN tsconfig-replace-paths --project tsconfig.json --src src --out dist
 
-# Run build command (assuming you have a "build" script in your package.json)
+# Run build command
 RUN pnpm run build
 
 # Set the environment variable for production
 ENV NODE_ENV=production
 
 # Start the application in production mode
-CMD ["pnpm", "start"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/index.js"]
