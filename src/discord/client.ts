@@ -80,7 +80,7 @@ gateway.on('presenceUpdate', async (data: GatewayPresenceUpdate) => {
   }
 
   try {
-    const spotifyActivity = data.activities.find((activity) => activity.type === 2) as unknown as Activity | undefined;
+    const spotifyActivity = data.activities.find((activity) => activity.type === 2) as Activity || undefined;
     const spotify = spotifyActivity ? parseSpotifyActivity(spotifyActivity) : null
 
     if (!spotifyActivity) {
@@ -139,7 +139,7 @@ gateway.on('presenceUpdate', async (data: GatewayPresenceUpdate) => {
     const presence = {
       discord_user: discordUser,
       discord_status: status,
-      activities: data.activities.filter((activity) => activity.type !== 2) as unknown as Activity[],
+      activities: data.activities.filter((activity) => activity.type !== 2) as Activity[],
       listening_to_spotify: !!spotifyActivity,
       spotify,
       active_on_discord_web: active_on_discord_web,
