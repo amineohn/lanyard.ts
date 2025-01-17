@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node-dev --respawn -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "refresh": "node dist/api/refresh-slash-commands.js"
+    "refresh": "node dist/scripts/refresh-slash-commands.js"
   },
   "dependencies": {
     "@fastify/websocket": "^11.0.2",
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
     "redis": "^4.7.0",
+    "tsconfig-paths": "^4.2.0",
     "ws": "^8.18.0",
     "zod": "^3.24.1"
   },

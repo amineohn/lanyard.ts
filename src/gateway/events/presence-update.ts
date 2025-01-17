@@ -1,12 +1,12 @@
-import {config} from "../../config";
-import {client} from "../../discord/client";
-import {Activity, DiscordUser, Kv, LanyardData} from "../../types";
-import {presenceStore} from "../../store/presence";
+import {config} from "@/config";
+import {client} from "@/discord/client";
+import {Activity, DiscordUser, Kv, LanyardData} from "@/types";
+import {presenceStore} from "@/store/presence";
 import {PresenceUpdateReceiveStatus, UserFlagsBitField} from "discord.js";
-import {Logger} from "../../utility/logger";
+import {Logger} from "@/utils/logger";
 import {GatewayPresenceUpdate} from "discord-api-types/payloads/v10/gateway";
-import {parseSpotifyActivity} from "../../utility/parse-spotify-activity";
-import {resolveUserFlags} from "../../utility/resolve-user-flags";
+import {parseSpotifyActivity} from "@/utils/parse-spotify-activity";
+import {resolveUserFlags} from "@/utils/resolve-user-flags";
 
 export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
     const userId = data.user?.id!;

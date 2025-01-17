@@ -1,7 +1,7 @@
 import { client } from './discord/client';
 import { server } from './api/server';
 import { config } from './config';
-import {Logger} from './utility/logger'
+import {Logger} from '@/utils/logger'
 async function main() {
   try {
     await client.login(config.discord.token);

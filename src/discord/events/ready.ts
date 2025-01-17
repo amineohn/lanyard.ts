@@ -1,4 +1,4 @@
-import { Logger } from '../../utility/logger';
+import { Logger } from '@/utils/logger';
 import { Client } from 'discord.js';
 
 export function handleClientReady(client: Client) {

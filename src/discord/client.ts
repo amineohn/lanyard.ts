@@ -1,8 +1,8 @@
 import {Client, GatewayIntentBits} from 'discord.js';
-import {events} from "../utility/events";
-import {handlePresenceUpdate} from "../gateway/events/presence-update";
-import {handleReady} from "../gateway/events/ready";
-import { gateway } from '../gateway';
+import {events} from "@/utils/events";
+import {handlePresenceUpdate} from "@/gateway/events/presence-update";
+import {handleReady} from "@/gateway/events/ready";
+import { gateway } from '@/gateway';
 import {handleClientReady} from "./events/ready";
 import {handleInteractionCreate} from "./events/interaction-create";
 

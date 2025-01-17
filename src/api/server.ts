@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import fastifyWebsocket from '@fastify/websocket';
-import { presenceStore } from '../store/presence';
+import { presenceStore } from '@/store/presence';
 
 const fastify = Fastify({
   logger: true

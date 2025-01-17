@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import { config } from '../config';
-import {Logger} from "../utility/logger";
+import { config } from '@/config';
+import {Logger} from "@/utils/logger";
 
 const DISCORD_GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json';
 const HEARTBEAT_INTERVAL = 41250; // Discord recommended heartbeat interval

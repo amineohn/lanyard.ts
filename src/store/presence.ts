@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
-import { config } from '../config';
-import {LanyardData} from "../types";
+import { config } from '@/config';
+import {LanyardData} from "@/types";
 
 class PresenceStore {
   private client;
