@@ -1,32 +1,29 @@
 # Use the official Node 20 image based on Alpine Linux
 FROM node:20-alpine
 
-# Install pnpm and tsx globally
-RUN npm install -g pnpm tsx
-
-# Set the working directory inside the container
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml files first
+# Install pnpm, tsx, and tsconfig-replace-paths globally
+RUN npm install -g pnpm tsx tsconfig-replace-paths
+
+# Copy package.json and pnpm-lock.yaml first (to leverage Docker caching)
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies using pnpm (with no frozen lockfile to ensure exact versions)
+# Install the dependencies using pnpm
 RUN pnpm install --no-frozen-lockfile
 
-# Copy the rest of your app's source code
-COPY . ./
+# Copy all source files
+COPY . .
 
-# Copy the .env file to the container
-COPY .env .env
+# Replace paths using tsconfig-replace-paths
+RUN tsconfig-replace-paths ./tsconfig.json ./src
 
-# Run the build command (assuming you have a "build" script in your package.json)
+# Run build command (assuming you have a "build" script in your package.json)
 RUN pnpm run build
 
-# Set the environment variable to "production"
+# Set the environment variable for production
 ENV NODE_ENV=production
 
-# Ensure tsconfig-paths is correctly resolved by the application in production
-RUN pnpm add tsconfig-paths
-
-# Default command to run the application
-CMD ["node", "-r", "tsconfig-paths/register", "dist/index.js"]
+# Start the application in production mode
+CMD ["pnpm", "start"]
