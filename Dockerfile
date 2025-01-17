@@ -14,7 +14,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --no-frozen-lockfile
 
 # Copy the rest of your app's source code
-COPY . .
+COPY . ./
 
 # Copy the .env file to the container
 COPY .env .env
@@ -25,5 +25,8 @@ RUN pnpm run build
 # Set the environment variable to "production"
 ENV NODE_ENV=production
 
+# Ensure tsconfig-paths is correctly resolved by the application in production
+RUN pnpm add tsconfig-paths
+
 # Default command to run the application
-CMD ["pnpm", "start"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/index.js"]
