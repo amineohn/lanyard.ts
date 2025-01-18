@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import { config } from '@/config';
+import { config } from '@/utils/config';
 import {Logger} from "@/utils/logger";
 
 const DISCORD_GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json';
@@ -157,8 +157,8 @@ export class GatewayClient extends EventEmitter {
         presence: {
           status: 'online',
           activities: [{
-            name: 'presence updates',
-            type: 3
+            name: 'Hello',
+            type: 2
           }]
         }
       }

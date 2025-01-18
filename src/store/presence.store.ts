@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { config } from '@/config';
+import { config } from '@/utils/config';
 import {LanyardData} from "@/types";
 
 class PresenceStore {

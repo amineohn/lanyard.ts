@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   ColorResolvable
 } from 'discord.js';
-import {presenceStore} from "@/store/presence";
+import {presenceStore} from "@/store/presence.store";
 
 export const commands = [
   new SlashCommandBuilder()
