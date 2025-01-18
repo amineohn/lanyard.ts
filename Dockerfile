@@ -17,7 +17,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Replace paths using tsconfig-replace-paths
-RUN tsconfig-replace-paths --project tsconfig.json --src lib --out dist
+RUN tsconfig-replace-paths --project tsconfig.json --src src --out dist
 
 # Optionally build the application (if dev needs built assets)
 # RUN pnpm run build
