@@ -15,7 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./lib",
     "paths": {
-      "@/*": ["*"],
+      "@/*": ["*"]
     }
   },
   "include": ["lib/**/*"],

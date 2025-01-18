@@ -19,9 +19,6 @@ COPY . .
 # Replace paths using tsconfig-replace-paths
 RUN tsconfig-replace-paths --project tsconfig.json --src lib --out dist
 
-# Optionally build the application (if dev needs built assets)
-# RUN pnpm run build
-
 # Set the environment variable for development
 ENV NODE_ENV=development
 
