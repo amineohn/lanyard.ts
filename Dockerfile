@@ -19,11 +19,11 @@ COPY . .
 # Replace paths using tsconfig-replace-paths
 RUN tsconfig-replace-paths --project tsconfig.json --src src --out dist
 
-# Run build command
-RUN pnpm run build
+# Optionally build the application (if dev needs built assets)
+# RUN pnpm run build
 
-# Set the environment variable for production
-ENV NODE_ENV=production
+# Set the environment variable for development
+ENV NODE_ENV=development
 
-# Start the application in production mode
-CMD ["node", "-r", "tsconfig-paths/register", "dist/index.js"]
+# Start the application in development mode
+CMD ["pnpm", "dev"]
