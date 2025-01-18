@@ -4,7 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./lib",
     "strict": false,
     "noImplicitAny": false,
     "moduleResolution": "node",
@@ -13,11 +13,11 @@
     "noEmit": false,
     "skipDefaultLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "./src",
+    "baseUrl": "./lib",
     "paths": {
       "@/*": ["*"],
     }
   },
-  "include": ["src/**/*"],
+  "include": ["lib/**/*"],
   "exclude": ["node_modules"]
 }

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn -r tsconfig-paths/register src/app.ts",
+    "dev": "ts-node-dev --respawn -r tsconfig-paths/register lib/app.ts",
     "build": "tsc",
     "start": "node -r tsconfig-paths/register dist/app.js",
     "refresh": "node dist/scripts/refresh-slash-commands.js"
