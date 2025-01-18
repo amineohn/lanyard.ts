@@ -4,21 +4,6 @@ import { presenceStore } from '@/store/presence.store';
 import { LanyardData } from '@/types';
 import { presenceRoutes } from '@/api/routes/presence';
 
-interface WebSocketMessage {
-  op: number;
-  d: string[] | any;
-}
-
-interface WebSocketResponse {
-  op: number;
-  d: {
-    userId?: string;
-    error?: string;
-    status?: string;
-    [key: string]: any;
-  };
-}
-
 export function createServer(): FastifyInstance {
   const fastify = Fastify({
     logger: true,
@@ -35,7 +20,7 @@ export function createServer(): FastifyInstance {
   fastify.register(fastifyWebsocket, {
     options: {
       clientTracking: true,
-      maxPayload: 1048576 // 1MB max payload
+      maxPayload: 1048576
     }
   });
 
@@ -67,98 +52,83 @@ export function createServer(): FastifyInstance {
     };
   });
 
-  // WebSocket endpoint
+// WebSocket endpoint
   fastify.register(async (fastify) => {
-    fastify.get('/socket', { websocket: true }, (connection) => {
+    fastify.get('/socket', { websocket: true }, (connection, req) => {
       const socket = connection;
-      let subscribedUsers: Set<string> = new Set();
 
       const subscriber = (userId: string, presence: LanyardData) => {
-        if (subscribedUsers.has(userId)) {
-          const response: WebSocketResponse = {
-            op: 0,
-            d: { userId, ...presence }
-          };
-          socket.send(JSON.stringify(response));
-        }
+        socket.send(JSON.stringify({
+          op: 0,
+          d: { userId, ...presence }
+        }));
       };
 
       presenceStore.subscribe(subscriber);
 
-      socket.on('message', async (messageRaw) => {
+      socket.on('message', async (message) => {
         try {
-          const message = JSON.parse(messageRaw.toString()) as WebSocketMessage;
-          const { op, d } = message;
+          const { op, d } = JSON.parse(message.toString());
 
           switch (op) {
-            case 1: // Subscribe to users
-              if (!Array.isArray(d)) {
-                throw new Error('Invalid subscription data');
+            case 1:
+              if (Array.isArray(d)) {
+                d.forEach(() => {
+                  presenceStore.subscribe((userId, presence) => {
+                    socket.send(JSON.stringify({
+                      op: 0,
+                      d: { userId: userId, ...presence }
+                    }));
+                  });
+                });
+              } else {
+                socket.send(JSON.stringify({
+                  op: -1,
+                  d: {error: 'Invalid op code'}
+                }));
               }
-              d.forEach(userId => subscribedUsers.add(userId));
+              break;
+            case 2:
+              if (Array.isArray(d)) {
+                const presences = await Promise.all(
+                    d.map(async (userId) => {
+                      const presence = await presenceStore.getPresence(userId);
+                      return { userId, presence };
+                    })
+                );
+
+                presences.forEach(({ userId, presence }) => {
+                  if (presence) {
+                    socket.send(JSON.stringify({
+                      op: 0,
+                      d: { userId, ...presence }
+                    }));
+                  }
+                });
+              }
               break;
 
-            case 2: // Initial presence state
-              if (!Array.isArray(d)) {
-                throw new Error('Invalid user list');
-              }
-
-              const presences = await Promise.all(
-                  d.map(async (userId) => {
-                    const presence = await presenceStore.getPresence(userId);
-                    subscribedUsers.add(userId);
-                    return { userId, presence };
-                  })
-              );
-
-              presences.forEach(({ userId, presence }) => {
-                if (presence) {
-                  const response: WebSocketResponse = {
-                    op: 0,
-                    d: { userId, ...presence }
-                  };
-                  socket.send(JSON.stringify(response));
-                }
-              });
-              break;
-
-            case 3: // Heartbeat
-              socket.send(JSON.stringify({
-                op: 3,
-                d: {
-                  status: 'ok',
-                  timestamp: new Date().toISOString()
-                }
-              }));
+            case 3:
+              socket.send(JSON.stringify({ op: 3, d: { status: 'ok' } }));
               break;
 
             default:
-              throw new Error('Invalid opcode');
+              socket.send(JSON.stringify({
+                op: -1,
+                d: { error: 'Invalid opcode' }
+              }));
           }
-        } catch (error) {
-          const errorResponse: WebSocketResponse = {
+        } catch (err) {
+          socket.send(JSON.stringify({
             op: -1,
-            d: {
-              error: error instanceof Error ? error.message : 'Invalid message format',
-              timestamp: new Date().toISOString()
-            }
-          };
-          socket.send(JSON.stringify(errorResponse));
+            d: { error: 'Invalid message format' }
+          }));
         }
       });
 
       socket.on('close', () => {
         presenceStore.unsubscribe(subscriber);
-        subscribedUsers.clear();
       });
-
-      socket.send(JSON.stringify({
-        op: 0,
-        d: {
-          status: 'connected',
-          timestamp: new Date().toISOString()
-        }
-      }));
     });
   });
 
