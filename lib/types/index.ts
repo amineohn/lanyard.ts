@@ -81,3 +81,10 @@ export interface DiscordUser {
     expires_at: number;
   } | null;
 }
+
+export interface GatewayPayload {
+  op: number;
+  d?: any;
+  s?: number;
+  t?: string;
+}

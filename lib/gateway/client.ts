@@ -2,24 +2,17 @@ import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import { config } from '@/utils/config';
 import {Logger} from "@/utils/logger";
-
-const DISCORD_GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json';
-const HEARTBEAT_INTERVAL = 41250; // Discord recommended heartbeat interval
-
-interface GatewayPayload {
-  op: number;
-  d?: any;
-  s?: number;
-  t?: string;
-}
+import {GatewayPayload} from "@/types";
 
 export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private sessionId: string | null = null;
   private sequence: number | null = null;
+  private heartbeatIntervalData = 41250;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private resumeGatewayUrl: string | null = null;
   private reconnectAttempts = 0;
+  private discordGatewayUrl = 'wss://gateway.discord.gg/?v=10&encoding=json';
   private readonly maxReconnectAttempts = 5;
 
   constructor() {
@@ -29,7 +22,7 @@ export class GatewayClient extends EventEmitter {
 
   private connect() {
     try {
-      this.ws = new WebSocket(this.resumeGatewayUrl || DISCORD_GATEWAY_URL);
+      this.ws = new WebSocket(this.resumeGatewayUrl || this.discordGatewayUrl);
       this.setupWebSocketHandlers();
     } catch (error) {
       Logger.error(`Failed to connect to gateway: ${error}`);
@@ -117,8 +110,6 @@ export class GatewayClient extends EventEmitter {
       case 'PRESENCE_UPDATE':
         this.emit('presenceUpdate', payload.d);
         break;
-
-      // Add other relevant event handlers
     }
   }
 
@@ -193,7 +184,7 @@ export class GatewayClient extends EventEmitter {
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), this.heartbeatIntervalData);
       Logger.warn(`Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
       
       setTimeout(() => {

@@ -43,7 +43,7 @@ class PresenceStore {
     this.subscribers.delete(callback);
   }
 
-  private notifySubscribers(userId: string, presence: LanyardData): void {
+  private notifySubscribers(userId: string, presence: LanyardData) {
     this.subscribers.forEach(callback => {
       try {
         callback(userId, presence);
