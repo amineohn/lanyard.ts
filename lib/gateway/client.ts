@@ -95,7 +95,7 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 9: // Invalid Session
-        Logger.warn('Invalid session, reidentifying...');
+        Logger.warn('Invalid session, re identifying...');
         this.sessionId = null;
         this.identify();
         break;

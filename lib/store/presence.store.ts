@@ -1,9 +1,9 @@
-import { createClient } from 'redis';
+import {createClient, RedisClientType} from 'redis';
 import { config } from '@/utils/config';
 import {LanyardData} from "@/types";
 
 class PresenceStore {
-  private client;
+  private client: RedisClientType;
   private subscribers: Set<(userId: string, presence: LanyardData) => void>;
 
   constructor() {
@@ -54,5 +54,4 @@ class PresenceStore {
   }
 }
 
-// Create and export a singleton instance
 export const presenceStore = new PresenceStore();
