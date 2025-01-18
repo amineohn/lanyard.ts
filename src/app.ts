@@ -1,12 +1,11 @@
 import { client } from '@/discord/client';
-import { server } from '@/api/server';
 import { config } from '@/utils/config';
 import {Logger} from '@/utils/logger'
+import {server} from "@/api/server";
 async function main() {
   try {
     await client.login(config.discord.token);
-    const fastify = await server;
-    await fastify.listen({ port: config.api.port, host: '0.0.0.0' });
+    await server.listen({ port: config.api.port, host: '0.0.0.0' });
 
     Logger.info(`Server listening on port ${config.api.port}`);
 
