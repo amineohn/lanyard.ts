@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn -r tsconfig-paths/register lib/app.ts",
     "build": "pnpm clean && tsc",
+    "lint": "pnpm exec prettier . --write",
     "refresh": "node dist/scripts/refresh-slash-commands.js"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^22.10.10",
     "@types/ws": "^8.5.14",
+    "prettier": "3.4.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.7.3"
   }

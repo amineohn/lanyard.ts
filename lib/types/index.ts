@@ -1,9 +1,9 @@
-import {UserFlagsBitField} from 'discord.js';
+import { UserFlagsBitField } from "discord.js";
 
 export interface LanyardData {
   discord_user?: DiscordUser;
   discord_status: "online" | "idle" | "dnd" | "invisible";
-  badges: string[]
+  badges: string[];
   activities: Activity[];
   kv: Kv;
   spotify: Spotify | null;
@@ -57,8 +57,8 @@ export interface Assets {
 }
 
 export interface Timestamps {
-  start: number | null
-  end?: number | null
+  start: number | null;
+  end?: number | null;
 }
 
 export interface Emoji {
@@ -68,9 +68,9 @@ export interface Emoji {
 }
 
 export interface DiscordUser {
-  username: string | undefined
+  username: string | undefined;
   globalName: string | undefined;
-  flags?: Readonly<UserFlagsBitField>
+  flags?: Readonly<UserFlagsBitField>;
   id: string | undefined;
   discriminator: string | undefined;
   bot: boolean;

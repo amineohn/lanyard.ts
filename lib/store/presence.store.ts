@@ -1,6 +1,6 @@
-import {createClient, RedisClientType} from 'redis';
-import { config } from '@/utils/config';
-import {LanyardData} from "@/types";
+import { createClient, RedisClientType } from "redis";
+import { config } from "@/utils/config";
+import { LanyardData } from "@/types";
 
 class PresenceStore {
   private client: RedisClientType;
@@ -8,7 +8,7 @@ class PresenceStore {
 
   constructor() {
     this.client = createClient({
-      url: config.redis.url
+      url: config.redis.url,
     });
     this.subscribers = new Set();
     this.client.connect();
@@ -35,20 +35,24 @@ class PresenceStore {
     await this.setPresence(userId, presence);
   }
 
-  async subscribe(callback: (userId: string, presence: LanyardData) => void): Promise<void> {
+  async subscribe(
+    callback: (userId: string, presence: LanyardData) => void,
+  ): Promise<void> {
     this.subscribers.add(callback);
   }
 
-  async unsubscribe(callback: (userId: string, presence: LanyardData) => void): Promise<void> {
+  async unsubscribe(
+    callback: (userId: string, presence: LanyardData) => void,
+  ): Promise<void> {
     this.subscribers.delete(callback);
   }
 
   private notifySubscribers(userId: string, presence: LanyardData) {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       try {
         callback(userId, presence);
       } catch (error) {
-        console.error('Error in subscriber callback:', error);
+        console.error("Error in subscriber callback:", error);
       }
     });
   }

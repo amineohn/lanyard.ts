@@ -1,3 +1,3 @@
-import {GatewayClient} from "./client";
+import { GatewayClient } from "./client";
 
-export const gateway = new GatewayClient()
+export const gateway = new GatewayClient();

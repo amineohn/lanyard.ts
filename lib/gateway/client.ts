@@ -1,6 +1,6 @@
-import WebSocket from 'ws';
-import { EventEmitter } from 'events';
-import { config } from '@/utils/config';
+import WebSocket from "ws";
+import { EventEmitter } from "events";
+import { config } from "@/utils/config";
 import { Logger } from "@/utils/logger";
 import { GatewayPayload } from "@/types";
 
@@ -8,18 +8,21 @@ export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private sessionId: string | null = null;
   private sequence: number | null = null;
-  private heartbeatIntervalData = config.discord.gateway.heartbeatInterval || 41250;
+  private heartbeatIntervalData =
+    config.discord.gateway.heartbeatInterval || 41250;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private resumeGatewayUrl: string | null = null;
   private reconnectAttempts = 0;
-  private discordGatewayUrl = 'wss://gateway.discord.gg/?v=10&encoding=json';
-  private readonly maxReconnectAttempts = config.discord.gateway.maxReconnectAttempts || 5;
-  private rateLimitRetryDelay = config.discord.gateway.rateLimitRetryDelay || 5000;
+  private discordGatewayUrl = "wss://gateway.discord.gg/?v=10&encoding=json";
+  private readonly maxReconnectAttempts =
+    config.discord.gateway.maxReconnectAttempts || 5;
+  private rateLimitRetryDelay =
+    config.discord.gateway.rateLimitRetryDelay || 5000;
   private rateLimited = false;
 
   constructor() {
     super();
-    process.on('SIGINT', () => this.gracefulShutdown());
+    process.on("SIGINT", () => this.gracefulShutdown());
     this.connect();
   }
 
@@ -42,8 +45,8 @@ export class GatewayClient extends EventEmitter {
   private setupWebSocketHandlers() {
     if (!this.ws) return;
 
-    this.ws.on('open', () => {
-      Logger.success('Connected to Discord Gateway');
+    this.ws.on("open", () => {
+      Logger.success("Connected to Discord Gateway");
       if (this.sessionId && this.sequence && this.resumeGatewayUrl) {
         this.resume();
       } else {
@@ -51,7 +54,7 @@ export class GatewayClient extends EventEmitter {
       }
     });
 
-    this.ws.on('message', (data: WebSocket.Data) => {
+    this.ws.on("message", (data: WebSocket.Data) => {
       try {
         const payload: GatewayPayload = JSON.parse(data.toString());
         this.handlePayload(payload);
@@ -60,13 +63,13 @@ export class GatewayClient extends EventEmitter {
       }
     });
 
-    this.ws.on('close', (code: number) => {
+    this.ws.on("close", (code: number) => {
       Logger.error(`Gateway connection closed with code ${code}`);
       this.cleanup();
       this.handleReconnect();
     });
 
-    this.ws.on('error', (error: Error) => {
+    this.ws.on("error", (error: Error) => {
       Logger.error(`Gateway WebSocket error: ${error}`);
       this.cleanup();
       this.handleReconnect();
@@ -84,7 +87,7 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 11: // Heartbeat ACK
-        Logger.debug('Heartbeat acknowledged');
+        Logger.debug("Heartbeat acknowledged");
         break;
 
       case 0: // Dispatch
@@ -92,18 +95,22 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 7: // Reconnect
-        Logger.warn('Gateway requested reconnect');
+        Logger.warn("Gateway requested reconnect");
         this.reconnect();
         break;
 
       case 9: // Invalid Session
-        Logger.warn('Invalid session, re-identifying...');
+        Logger.warn("Invalid session, re-identifying...");
         this.sessionId = null;
         this.identify();
         break;
 
       case 4: // Rate Limit
-        Logger.warn('Rate limited by Discord, retrying in ' + payload.d.retry_after + 'ms');
+        Logger.warn(
+          "Rate limited by Discord, retrying in " +
+            payload.d.retry_after +
+            "ms",
+        );
         this.rateLimited = true;
         setTimeout(() => {
           this.rateLimited = false;
@@ -118,18 +125,18 @@ export class GatewayClient extends EventEmitter {
 
   private handleDispatch(payload: GatewayPayload) {
     switch (payload.t) {
-      case 'READY':
+      case "READY":
         this.sessionId = payload.d.session_id;
         this.resumeGatewayUrl = payload.d.resume_gateway_url;
-        this.emit('ready', payload.d);
+        this.emit("ready", payload.d);
         break;
 
-      case 'RESUMED':
-        Logger.success('Session resumed successfully');
+      case "RESUMED":
+        Logger.success("Session resumed successfully");
         break;
 
-      case 'PRESENCE_UPDATE':
-        this.emit('presenceUpdate', payload.d);
+      case "PRESENCE_UPDATE":
+        this.emit("presenceUpdate", payload.d);
         break;
 
       default:
@@ -149,48 +156,56 @@ export class GatewayClient extends EventEmitter {
 
   private sendHeartbeat() {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        op: 1,
-        d: this.sequence
-      }));
+      this.ws.send(
+        JSON.stringify({
+          op: 1,
+          d: this.sequence,
+        }),
+      );
     }
   }
 
   private identify() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-    this.ws.send(JSON.stringify({
-      op: 2,
-      d: {
-        token: config.discord.token,
-        intents: 1 << 8, // GUILD_PRESENCES
-        properties: {
-          os: 'linux',
-          browser: 'lanyard-ts',
-          device: 'lanyard-ts'
+    this.ws.send(
+      JSON.stringify({
+        op: 2,
+        d: {
+          token: config.discord.token,
+          intents: 1 << 8, // GUILD_PRESENCES
+          properties: {
+            os: "linux",
+            browser: "lanyard-ts",
+            device: "lanyard-ts",
+          },
+          presence: {
+            status: "online",
+            activities: [
+              {
+                name: "Hello",
+                type: 2,
+              },
+            ],
+          },
         },
-        presence: {
-          status: 'online',
-          activities: [{
-            name: 'Hello',
-            type: 2
-          }]
-        }
-      }
-    }));
+      }),
+    );
   }
 
   private resume() {
     if (!this.ws || !this.sessionId || !this.sequence) return;
 
-    this.ws.send(JSON.stringify({
-      op: 6,
-      d: {
-        token: config.discord.token,
-        session_id: this.sessionId,
-        seq: this.sequence
-      }
-    }));
+    this.ws.send(
+      JSON.stringify({
+        op: 6,
+        d: {
+          token: config.discord.token,
+          session_id: this.sessionId,
+          seq: this.sequence,
+        },
+      }),
+    );
   }
 
   private cleanup() {
@@ -208,14 +223,19 @@ export class GatewayClient extends EventEmitter {
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), this.heartbeatIntervalData);
-      Logger.warn(`Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      const delay = Math.min(
+        1000 * Math.pow(2, this.reconnectAttempts - 1),
+        this.heartbeatIntervalData,
+      );
+      Logger.warn(
+        `Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`,
+      );
 
       setTimeout(() => {
         this.connect();
       }, delay);
     } else {
-      Logger.error('Max reconnection attempts reached');
+      Logger.error("Max reconnection attempts reached");
       process.exit(1);
     }
   }
@@ -226,7 +246,7 @@ export class GatewayClient extends EventEmitter {
   }
 
   private gracefulShutdown() {
-    Logger.warn('Shutting down gracefully...');
+    Logger.warn("Shutting down gracefully...");
     this.destroy();
     process.exit(0);
   }
