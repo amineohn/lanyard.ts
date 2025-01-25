@@ -4,14 +4,14 @@ FROM node:20-alpine
 # Set working directory inside the container
 WORKDIR /app
 
-# Install pnpm, tsx, and tsconfig-replace-paths globally
-RUN npm install -g pnpm tsx tsconfig-replace-paths
+# Install bun, tsx, and tsconfig-replace-paths globally
+RUN npm install -g bun tsx tsconfig-replace-paths
 
-# Copy package.json and pnpm-lock.yaml first to leverage Docker caching
-COPY package.json pnpm-lock.yaml ./
+# Copy package.json and bun.lockb first to leverage Docker caching
+COPY package.json bun.lockb ./
 
-# Install the dependencies using pnpm
-RUN pnpm install --frozen-lockfile
+# Install the dependencies using bun
+RUN bun install --frozen-lockfile
 
 # Copy all source files into the container
 COPY . .
@@ -29,4 +29,4 @@ RUN chmod -R 755 /app
 RUN ls -la /app/lib
 
 # Start the application in development mode
-CMD ["pnpm", "dev"]
+CMD ["bun", "dev"]

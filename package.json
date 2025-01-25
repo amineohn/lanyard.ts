@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn -r tsconfig-paths/register lib/app.ts",
-    "build": "pnpm clean && tsc",
-    "lint": "pnpm exec prettier . --write",
+    "dev": "bun --reload -r tsconfig-paths/register lib/app.ts",
+    "build": "bun clean && tsc",
+    "lint": "bun exec prettier . --write",
     "refresh": "node dist/scripts/refresh-slash-commands.js"
   },
   "dependencies": {

@@ -1,5 +1,6 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyReply } from "fastify";
 import { presenceStore } from "@/store/presence.store";
+import { Logger } from "@/utils/logger";
 
 interface KVRequestBody {
   key: string;
@@ -10,33 +11,58 @@ interface UserIdParams {
   userId: string;
 }
 
+// Helper function for handling errors
+async function handleError(
+  fastify: FastifyInstance,
+  reply: FastifyReply,
+  error: Error,
+  statusCode: number,
+  customErrorMessage: string,
+) {
+  Logger.error(`
+    ${error.name}: ${error.message}
+    ${statusCode}: ${customErrorMessage}
+  `);
+  return reply.code(statusCode).send({
+    error: customErrorMessage,
+    code: statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
+  });
+}
+
+// Helper function to check if a user exists
+async function getPresenceByUserId(
+  fastify: FastifyInstance,
+  userId: string,
+  reply: FastifyReply,
+) {
+  try {
+    const presence = await presenceStore.getPresence(userId);
+    if (!presence) {
+      return handleError(
+        fastify,
+        reply,
+        new Error("Presence not found"),
+        404,
+        "User not found",
+      );
+    }
+    return presence;
+  } catch (error) {
+    return handleError(fastify, reply, error, 500, "Internal server error");
+  }
+}
+
+// Refactored presenceRoutes function
 export async function presenceRoutes(fastify: FastifyInstance) {
   // Get presence endpoint
   fastify.get<{
     Params: UserIdParams;
   }>("/api/v1/users/:userId", async (request, reply) => {
-    try {
-      const { userId } = request.params;
-      const presence = await presenceStore.getPresence(userId);
+    const { userId } = request.params;
+    const presence = await getPresenceByUserId(fastify, userId, reply);
+    if (!presence) return;
 
-      if (!presence) {
-        return reply.code(404).send({
-          error: "Presence not found",
-          code: "PRESENCE_NOT_FOUND",
-        });
-      }
-
-      return {
-        success: true,
-        data: presence,
-      };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({
-        error: "Internal server error",
-        code: "INTERNAL_SERVER_ERROR",
-      });
-    }
+    return { success: true, data: presence };
   });
 
   // Set KV endpoint
@@ -44,51 +70,28 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     Params: UserIdParams;
     Body: KVRequestBody;
   }>("/api/v1/users/:userId/kv", async (request, reply) => {
-    try {
-      const { userId } = request.params;
-      const { key, value } = request.body;
+    const { userId } = request.params;
+    const { key, value } = request.body;
 
-      // Validate input
-      if (!key || typeof key !== "string") {
-        return reply.code(400).send({
-          error: "Invalid key provided",
-          code: "INVALID_KEY",
-        });
-      }
-
-      if (!value || typeof value !== "string") {
-        return reply.code(400).send({
-          error: "Invalid value provided",
-          code: "INVALID_VALUE",
-        });
-      }
-
-      // Check if user exists
-      const presence = await presenceStore.getPresence(userId);
-      if (!presence) {
-        return reply.code(404).send({
-          error: "User not found",
-          code: "USER_NOT_FOUND",
-        });
-      }
-
-      await presenceStore.setKV(userId, key, value);
-
-      return {
-        success: true,
-        data: {
-          userId,
-          key,
-          value,
-        },
-      };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({
-        error: "Internal server error",
-        code: "INTERNAL_SERVER_ERROR",
-      });
+    // Validate input
+    if (!key || typeof key !== "string") {
+      return reply
+        .code(400)
+        .send({ error: "Invalid key provided", code: "INVALID_KEY" });
     }
+
+    if (!value || typeof value !== "string") {
+      return reply
+        .code(400)
+        .send({ error: "Invalid value provided", code: "INVALID_VALUE" });
+    }
+
+    const presence = await getPresenceByUserId(fastify, userId, reply);
+    if (!presence) return;
+
+    await presenceStore.setKV(userId, key, value);
+
+    return { success: true, data: { userId, key, value } };
   });
 
   // Get KV endpoint
@@ -96,42 +99,19 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     Params: UserIdParams;
     Querystring: { key: string };
   }>("/api/v1/users/:userId/kv", async (request, reply) => {
-    try {
-      const { userId } = request.params;
-      const { key } = request.query as { key?: string };
+    const { userId } = request.params;
+    const { key } = request.query as { key?: string };
 
-      const presence = await presenceStore.getPresence(userId);
-      if (!presence) {
-        return reply.code(404).send({
-          error: "User not found",
-          code: "USER_NOT_FOUND",
-        });
-      }
+    const presence = await getPresenceByUserId(fastify, userId, reply);
+    if (!presence) return;
 
-      const kv = presence.kv || {};
+    const kv = presence.kv || {};
 
-      if (key) {
-        // Return specific key if provided
-        return {
-          success: true,
-          data: {
-            [key]: kv[key] ?? null,
-          },
-        };
-      }
-
-      // Return all KV pairs if no key specified
-      return {
-        success: true,
-        data: kv,
-      };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({
-        error: "Internal server error",
-        code: "INTERNAL_SERVER_ERROR",
-      });
+    if (key) {
+      return { success: true, data: { [key]: kv[key] ?? null } };
     }
+
+    return { success: true, data: kv };
   });
 
   // Delete KV endpoint
@@ -139,48 +119,27 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     Params: UserIdParams;
     Querystring: { key: string };
   }>("/api/v1/users/:userId/kv", async (request, reply) => {
-    try {
-      const { userId } = request.params;
-      const { key } = request.query as { key: string };
+    const { userId } = request.params;
+    const { key } = request.query as { key: string };
 
-      if (!key) {
-        return reply.code(400).send({
-          error: "Key is required",
-          code: "KEY_REQUIRED",
-        });
-      }
-
-      const presence = await presenceStore.getPresence(userId);
-      if (!presence) {
-        return reply.code(404).send({
-          error: "User not found",
-          code: "USER_NOT_FOUND",
-        });
-      }
-
-      if (!presence.kv?.[key]) {
-        return reply.code(404).send({
-          error: "Key not found",
-          code: "KEY_NOT_FOUND",
-        });
-      }
-
-      delete presence.kv[key];
-      await presenceStore.setPresence(userId, presence);
-
-      return {
-        success: true,
-        data: {
-          userId,
-          key,
-        },
-      };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({
-        error: "Internal server error",
-        code: "INTERNAL_SERVER_ERROR",
-      });
+    if (!key) {
+      return reply
+        .code(400)
+        .send({ error: "Key is required", code: "KEY_REQUIRED" });
     }
+
+    const presence = await getPresenceByUserId(fastify, userId, reply);
+    if (!presence) return;
+
+    if (!presence.kv?.[key]) {
+      return reply
+        .code(404)
+        .send({ error: "Key not found", code: "KEY_NOT_FOUND" });
+    }
+
+    delete presence.kv[key];
+    await presenceStore.setPresence(userId, presence);
+
+    return { success: true, data: { userId, key } };
   });
 }
