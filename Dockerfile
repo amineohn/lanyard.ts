@@ -7,11 +7,11 @@ WORKDIR /app
 # Install bun, tsx, and tsconfig-replace-paths globally
 RUN npm install -g bun tsx tsconfig-replace-paths
 
-# Copy package.json and bun.lockb first to leverage Docker caching
-COPY package.json bun.lockb ./
+# Copy package.json first to leverage Docker caching
+COPY package.json ./
 
 # Install the dependencies using bun
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy all source files into the container
 COPY . ./
