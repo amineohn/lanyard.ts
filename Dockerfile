@@ -14,7 +14,7 @@ COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile
 
 # Copy all source files into the container
-COPY . .
+COPY . ./
 
 # Set up tsconfig-paths for development
 RUN tsconfig-replace-paths --project tsconfig.json --src lib --out dist
