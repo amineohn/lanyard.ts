@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import { EventEmitter } from "events";
 import { config } from "@/utils/config";
 import { Logger } from "@/utils/logger";
-import { GatewayPayload } from "@/types";
+import { GatewayPayload } from "@/types/lanyard";
 
 export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;

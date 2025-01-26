@@ -1,4 +1,4 @@
-import { Activity } from "@/types";
+import { Activity } from "@/types/lanyard";
 
 export function parseSpotifyActivity(activity: Activity) {
   if (activity?.type !== 2 || !activity.id) return undefined;

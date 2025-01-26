@@ -1,4 +1,4 @@
-import { LanyardData } from "@/types";
+import { LanyardData } from "@/types/lanyard";
 import { presenceStore } from "@/store/presence.store";
 import { FastifyInstance } from "fastify";
 

@@ -1,6 +1,6 @@
 import { config } from "@/utils/config";
 import { client } from "@/discord/client";
-import { Activity, DiscordUser, LanyardData } from "@/types";
+import { Activity, DiscordUser, LanyardData } from "@/types/lanyard";
 import { presenceStore } from "@/store/presence.store";
 import { PresenceUpdateReceiveStatus, UserFlagsBitField } from "discord.js";
 import { Logger } from "@/utils/logger";
@@ -28,11 +28,11 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       : null;
 
     if (!spotifyActivity) {
-      Logger.debug("No Spotify activity found.");
-    } else if (!spotify?.track_id) {
-      Logger.debug(
-        `Spotify activity found but parsing failed or track is not active: ${spotify?.track_id}`,
-      );
+      return;
+    }
+
+    if (!spotify?.track_id) {
+      return;
     }
 
     // Get existing presence and user data
