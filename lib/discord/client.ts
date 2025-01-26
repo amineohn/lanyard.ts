@@ -1,5 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js";
-import { events } from "@/utils/events";
+import { Client, Events, GatewayIntentBits } from "discord.js";
 import { handlePresenceUpdate } from "@/gateway/events/presence-update";
 import { handleReady } from "@/gateway/events/ready";
 import { gateway } from "@/gateway";
@@ -19,8 +18,8 @@ const client = new Client({
 client.once("ready", handleClientReady);
 client.on("interactionCreate", handleInteractionCreate);
 
-gateway.on(events.ready, handleReady);
-gateway.on(events.presence_update, handlePresenceUpdate);
+gateway.on(Events.ClientReady, handleReady);
+gateway.on(Events.PresenceUpdate, handlePresenceUpdate);
 
 process.on("SIGINT", () => {
   gateway.destroy();
