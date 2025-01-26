@@ -1,5 +1,5 @@
 import { LanyardData } from "@/types/lanyard";
-import { presenceStore } from "@/store/presence.store";
+import { store } from "@/store/presence.store";
 import { FastifyInstance } from "fastify";
 
 export function websocketRoutes(fastify: FastifyInstance) {
@@ -15,7 +15,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
       );
     };
 
-    await presenceStore.subscribe(subscriber);
+    await store.subscribe(subscriber);
 
     socket.on("message", async (message) => {
       try {
@@ -25,7 +25,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
           case 1:
             if (Array.isArray(d)) {
               d.forEach(() => {
-                presenceStore.subscribe((userId, presence) => {
+                store.subscribe((userId, presence) => {
                   socket.send(
                     JSON.stringify({
                       op: 0,
@@ -47,7 +47,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
             if (Array.isArray(d)) {
               const presences = await Promise.all(
                 d.map(async (userId) => {
-                  const presence = await presenceStore.getPresence(userId);
+                  const presence = await store.getPresence(userId);
                   return { userId, presence };
                 }),
               );
@@ -88,7 +88,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
     });
 
     socket.on("close", async () => {
-      await presenceStore.unsubscribe(subscriber);
+      await store.unsubscribe(subscriber);
     });
   });
 }

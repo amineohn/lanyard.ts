@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   ColorResolvable,
 } from "discord.js";
-import { presenceStore } from "@/store/presence.store";
+import { store } from "@/store/presence.store";
 
 export const commands = [
   new SlashCommandBuilder()
@@ -155,14 +155,14 @@ export async function handleCommand(
           const key = interaction.options.getString("key", true);
           const value = interaction.options.getString("value", true);
 
-          await presenceStore.setKV(userId, key, value);
+          await store.setKV(userId, key, value);
           await interaction.reply(`Set ${key}=${value}`);
           break;
         }
 
         case "get": {
           const key = interaction.options.getString("key", true);
-          const presence = await presenceStore.getPresence(userId);
+          const presence = await store.getPresence(userId);
           const kv = presence?.kv || {};
 
           if (kv[key]) {
@@ -175,11 +175,11 @@ export async function handleCommand(
 
         case "delete": {
           const key = interaction.options.getString("key", true);
-          const presence = await presenceStore.getPresence(userId);
+          const presence = await store.getPresence(userId);
 
           if (presence?.kv) {
             delete presence.kv[key];
-            await presenceStore.setPresence(userId, presence);
+            await store.setPresence(userId, presence);
             await interaction.reply(`Deleted key "${key}"`);
           } else {
             await interaction.reply(`Key "${key}" not found`);
@@ -188,7 +188,7 @@ export async function handleCommand(
         }
 
         case "list": {
-          const presence = await presenceStore.getPresence(userId);
+          const presence = await store.getPresence(userId);
           const kv = presence?.kv || {}; // Ensure kv is an object
 
           if (Object.keys(kv).length > 0) {

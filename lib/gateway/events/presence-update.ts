@@ -1,7 +1,7 @@
 import { config } from "@/utils/config";
 import { client } from "@/discord/client";
 import { Activity, DiscordUser, LanyardData } from "@/types/lanyard";
-import { presenceStore } from "@/store/presence.store";
+import { store } from "@/store/presence.store";
 import { PresenceUpdateReceiveStatus, UserFlagsBitField } from "discord.js";
 import { Logger } from "@/utils/logger";
 import { GatewayPresenceUpdate } from "discord-api-types/payloads/v10/gateway";
@@ -37,7 +37,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
 
     // Get existing presence and user data
     const [existingPresence, user] = await Promise.all([
-      presenceStore.getPresence(userId),
+      store.getPresence(userId),
       client.users.fetch(userId),
     ]);
 
@@ -85,7 +85,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       kv: existingPresence?.kv ?? {},
     } satisfies LanyardData;
 
-    await presenceStore.setPresence(userId, presence);
+    await store.setPresence(userId, presence);
   } catch (error) {
     Logger.error(
       `Error updating presence for user ${userId}: ${error instanceof Error ? error.message : "Unknown error"}`,

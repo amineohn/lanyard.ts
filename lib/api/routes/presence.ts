@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply } from "fastify";
-import { presenceStore } from "@/store/presence.store";
+import { store } from "@/store/presence.store";
 import { Logger } from "@/utils/logger";
 
 interface KVRequestBody {
@@ -36,7 +36,7 @@ async function getPresenceByUserId(
   reply: FastifyReply,
 ) {
   try {
-    const presence = await presenceStore.getPresence(userId);
+    const presence = await store.getPresence(userId);
     if (!presence) {
       return handleError(
         fastify,
@@ -89,7 +89,7 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     const presence = await getPresenceByUserId(fastify, userId, reply);
     if (!presence) return;
 
-    await presenceStore.setKV(userId, key, value);
+    await store.setKV(userId, key, value);
 
     return { success: true, data: { userId, key, value } };
   });
@@ -138,7 +138,7 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     }
 
     delete presence.kv[key];
-    await presenceStore.setPresence(userId, presence);
+    await store.setPresence(userId, presence);
 
     return { success: true, data: { userId, key } };
   });

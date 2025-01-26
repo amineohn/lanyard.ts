@@ -58,4 +58,4 @@ class PresenceStore {
   }
 }
 
-export const presenceStore = new PresenceStore();
+export const store = new PresenceStore();
