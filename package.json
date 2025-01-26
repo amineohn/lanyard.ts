@@ -1,6 +1,6 @@
 {
-  "name": "lanyard-ts",
-  "version": "1.0.0",
+  "name": "lanyard.ts",
+  "version": "1.0.5",
   "private": true,
   "scripts": {
     "dev": "bun --reload -r tsconfig-paths/register lib/app.ts",
