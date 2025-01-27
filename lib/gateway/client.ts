@@ -1,24 +1,25 @@
-import WebSocket from "ws";
+import WebSocket, { Data } from "ws";
 import { EventEmitter } from "events";
 import { config } from "@/utils/config";
 import { Logger } from "@/utils/logger";
 import { GatewayPayload } from "@/types/lanyard";
 
+const DISCORD_GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json"; 
+
 export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private sessionId: string | null = null;
   private sequence: number | null = null;
-  private heartbeatIntervalData =
-    config.discord.gateway.heartbeatInterval || 41250;
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private resumeGatewayUrl: string | null = null;
   private reconnectAttempts = 0;
-  private discordGatewayUrl = "wss://gateway.discord.gg/?v=10&encoding=json";
+  private rateLimited = false;
+
+  private readonly heartbeatIntervalMs =
+    config.discord.gateway.heartbeatInterval || 41250;
   private readonly maxReconnectAttempts =
     config.discord.gateway.maxReconnectAttempts || 5;
-  private rateLimitRetryDelay =
+  private readonly rateLimitRetryDelay =
     config.discord.gateway.rateLimitRetryDelay || 5000;
-  private rateLimited = false;
 
   constructor() {
     super();
@@ -26,60 +27,59 @@ export class GatewayClient extends EventEmitter {
     this.connect();
   }
 
+  // Entry point for connecting to the WebSocket
   private connect() {
     if (this.rateLimited) {
       Logger.warn(`Rate limited, retrying in ${this.rateLimitRetryDelay}ms...`);
-      setTimeout(() => this.connect(), this.rateLimitRetryDelay);
       return;
     }
 
     try {
-      this.ws = new WebSocket(this.resumeGatewayUrl || this.discordGatewayUrl);
+      this.ws = new WebSocket(DISCORD_GATEWAY_URL);
       this.setupWebSocketHandlers();
     } catch (error) {
-      Logger.error(`Failed to connect to gateway: ${error}`);
+      Logger.error(`Failed to connect: ${error}`);
       this.handleReconnect();
     }
   }
 
+  // WebSocket Handlers
   private setupWebSocketHandlers() {
     if (!this.ws) return;
 
     this.ws.on("open", () => {
       Logger.success("Connected to Discord Gateway");
-      if (this.sessionId && this.sequence && this.resumeGatewayUrl) {
-        this.resume();
-      } else {
-        this.identify();
-      }
+      this.sessionId ? this.resume() : this.identify();
     });
 
-    this.ws.on("message", (data: WebSocket.Data) => {
-      try {
-        const payload: GatewayPayload = JSON.parse(data.toString());
-        this.handlePayload(payload);
-      } catch (error) {
-        Logger.error(`Failed to parse gateway message: ${error}`);
-      }
-    });
+    this.ws.on("message", (data: Data) => this.handleMessage(data));
 
     this.ws.on("close", (code: number) => {
-      Logger.error(`Gateway connection closed with code ${code}`);
+      Logger.error(`Connection closed with code ${code}`);
       this.cleanup();
       this.handleReconnect();
     });
 
     this.ws.on("error", (error: Error) => {
-      Logger.error(`Gateway WebSocket error: ${error}`);
+      Logger.error(`WebSocket error: ${error}`);
       this.cleanup();
       this.handleReconnect();
     });
   }
 
-  private handlePayload(payload: GatewayPayload) {
-    if (payload.s) {
-      this.sequence = payload.s;
+  // Handle WebSocket messages
+  private handleMessage(data: Data) {
+    try {
+      const payload: GatewayPayload = JSON.parse(data.toString());
+      this.handlePayload(payload);
+    } catch (error) {
+      Logger.error(`Failed to parse message: ${error}`);
     }
+  }
+
+  // Payload handler
+  private handlePayload(payload: GatewayPayload) {
+    if (payload.s) this.sequence = payload.s;
 
     switch (payload.op) {
       case 10: // Hello
@@ -106,28 +106,20 @@ export class GatewayClient extends EventEmitter {
         break;
 
       case 4: // Rate Limit
-        Logger.warn(
-          "Rate limited by Discord, retrying in " +
-            payload.d.retry_after +
-            "ms",
-        );
-        this.rateLimited = true;
-        setTimeout(() => {
-          this.rateLimited = false;
-          this.connect();
-        }, payload.d.retry_after);
+        const retryAfter = payload.d.retry_after || this.rateLimitRetryDelay;
+        this.setRateLimit(retryAfter);
         break;
 
       default:
-        Logger.debug(`Unhandled gateway op code: ${payload.op}`);
+        Logger.debug(`Unhandled opcode: ${payload.op}`);
     }
   }
 
+  // Dispatch event handler
   private handleDispatch(payload: GatewayPayload) {
     switch (payload.t) {
       case "READY":
         this.sessionId = payload.d.session_id;
-        this.resumeGatewayUrl = payload.d.resume_gateway_url;
         this.emit("ready", payload.d);
         break;
 
@@ -140,79 +132,75 @@ export class GatewayClient extends EventEmitter {
         break;
 
       default:
-        Logger.debug(`Unhandled dispatch event: ${payload.t}`);
+        Logger.debug(`Unhandled event: ${payload.t}`);
     }
   }
 
+  // Set rate limit
+  private setRateLimit(duration: number) {
+    Logger.warn(`Rate limited. Retrying in ${duration}ms...`);
+    this.rateLimited = true;
+
+    setTimeout(() => {
+      this.rateLimited = false;
+      this.connect();
+    }, duration);
+  }
+
+  // Start heartbeat
   private startHeartbeat(interval: number) {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 
     this.heartbeatInterval = setInterval(() => {
-      this.sendHeartbeat();
+      this.sendPayload({ op: 1, d: this.sequence });
     }, interval);
   }
 
-  private sendHeartbeat() {
+  // Send payloads
+  private sendPayload(payload: object) {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(
-        JSON.stringify({
-          op: 1,
-          d: this.sequence,
-        }),
-      );
+      this.ws.send(JSON.stringify(payload));
     }
   }
 
+  // Identify as a client
   private identify() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-
-    this.ws.send(
-      JSON.stringify({
-        op: 2,
-        d: {
-          token: config.discord.token,
-          intents: 1 << 8, // GUILD_PRESENCES
-          properties: {
-            os: "linux",
-            browser: "lanyard-ts",
-            device: "lanyard-ts",
-          },
-          presence: {
-            status: "online",
-            activities: [
-              {
-                name: "Hello",
-                type: 2,
-              },
-            ],
-          },
+    this.sendPayload({
+      op: 2,
+      d: {
+        token: config.discord.token,
+        intents: 1 << 8, // GUILD_PRESENCES
+        properties: {
+          os: "linux",
+          browser: "lanyard-ts",
+          device: "lanyard-ts",
         },
-      }),
-    );
+        presence: {
+          status: "online",
+          activities: [{ name: "Hello", type: 2 }],
+        },
+      },
+    });
   }
 
+  // Resume session
   private resume() {
-    if (!this.ws || !this.sessionId || !this.sequence) return;
-
-    this.ws.send(
-      JSON.stringify({
+    if (this.sessionId && this.sequence) {
+      this.sendPayload({
         op: 6,
         d: {
           token: config.discord.token,
           session_id: this.sessionId,
           seq: this.sequence,
         },
-      }),
-    );
+      });
+    }
   }
 
+  // Clean up resources
   private cleanup() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = null;
 
     if (this.ws) {
       this.ws.removeAllListeners();
@@ -220,37 +208,39 @@ export class GatewayClient extends EventEmitter {
     }
   }
 
+  // Handle reconnection attempts
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(
-        1000 * Math.pow(2, this.reconnectAttempts - 1),
-        this.heartbeatIntervalData,
-      );
-      Logger.warn(
-        `Reconnecting in ${delay}ms... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`,
+        1000 * 2 ** (this.reconnectAttempts - 1),
+        this.heartbeatIntervalMs
       );
 
-      setTimeout(() => {
-        this.connect();
-      }, delay);
+      Logger.warn(
+        `Reconnecting in ${delay}ms... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+      );
+      setTimeout(() => this.connect(), delay);
     } else {
       Logger.error("Max reconnection attempts reached");
       process.exit(1);
     }
   }
 
+  // Reconnect logic
   private reconnect() {
     this.cleanup();
     this.connect();
   }
 
+  // Graceful shutdown
   private gracefulShutdown() {
     Logger.warn("Shutting down gracefully...");
     this.destroy();
     process.exit(0);
   }
 
+  // Destroy client
   public destroy() {
     this.cleanup();
     this.removeAllListeners();
