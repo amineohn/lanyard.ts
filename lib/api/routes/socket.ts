@@ -11,7 +11,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
         JSON.stringify({
           op: 0,
           d: { userId, ...presence },
-        }),
+        })
       );
     };
 
@@ -30,7 +30,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
                     JSON.stringify({
                       op: 0,
                       d: { userId: userId, ...presence },
-                    }),
+                    })
                   );
                 });
               });
@@ -39,7 +39,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
                 JSON.stringify({
                   op: -1,
                   d: { error: "Invalid op code" },
-                }),
+                })
               );
             }
             break;
@@ -47,9 +47,9 @@ export function websocketRoutes(fastify: FastifyInstance) {
             if (Array.isArray(d)) {
               const presences = await Promise.all(
                 d.map(async (userId) => {
-                  const presence = await store.getPresence(userId);
+                  const presence = await store.get(userId);
                   return { userId, presence };
-                }),
+                })
               );
 
               presences.forEach(({ userId, presence }) => {
@@ -58,7 +58,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
                     JSON.stringify({
                       op: 0,
                       d: { userId, ...presence },
-                    }),
+                    })
                   );
                 }
               });
@@ -74,7 +74,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
               JSON.stringify({
                 op: -1,
                 d: { error: "Invalid opcode" },
-              }),
+              })
             );
         }
       } catch (err) {
@@ -82,7 +82,7 @@ export function websocketRoutes(fastify: FastifyInstance) {
           JSON.stringify({
             op: -1,
             d: { error: "Invalid message format" },
-          }),
+          })
         );
       }
     });
