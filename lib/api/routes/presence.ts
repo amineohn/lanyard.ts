@@ -17,7 +17,7 @@ async function handleError(
   reply: FastifyReply,
   error: Error,
   statusCode: number,
-  customErrorMessage: string,
+  customErrorMessage: string
 ) {
   Logger.error(`
     ${error.name}: ${error.message}
@@ -33,17 +33,17 @@ async function handleError(
 async function getPresenceByUserId(
   fastify: FastifyInstance,
   userId: string,
-  reply: FastifyReply,
+  reply: FastifyReply
 ) {
   try {
-    const presence = await store.getPresence(userId);
+    const presence = await store.get(userId);
     if (!presence) {
       return handleError(
         fastify,
         reply,
         new Error("Presence not found"),
         404,
-        "User not found",
+        "User not found"
       );
     }
     return presence;
@@ -138,7 +138,7 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     }
 
     delete presence.kv[key];
-    await store.setPresence(userId, presence);
+    await store.set(userId, presence);
 
     return { success: true, data: { userId, key } };
   });

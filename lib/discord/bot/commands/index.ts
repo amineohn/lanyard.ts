@@ -1,209 +1,69 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  EmbedBuilder,
-  ColorResolvable,
-} from "discord.js";
-import { store } from "@/store/presence.store";
+import { ChatInputCommandInteraction } from "discord.js";
+
+import { subscribeCommand } from "@/discord/bot/commands/subscribe";
+import { unSubscribeCommand } from "@/discord/bot/commands/un-subscribe";
+import { statusCommand } from "@/discord/bot/commands/status";
+import { kvCommand } from "@/discord/bot/commands/kv";
+
+import { handleSubscribe } from "@/discord/bot/commands/handlers/subscribe";
+import { handleUnsubscribe } from "@/discord/bot/commands/handlers/un-subscribe";
+import { handleStatus } from "@/discord/bot/commands/handlers/status";
+import { handleKVSet } from "@/discord/bot/commands/handlers/kv/set";
+import { handleKVDelete } from "@/discord/bot/commands/handlers/kv/delete";
+import { handleKVGet } from "@/discord/bot/commands/handlers/kv/get";
+import { handleKVList } from "@/discord/bot/commands/handlers/kv/list";
 
 export const commands = [
-  new SlashCommandBuilder()
-    .setName("subscribe")
-    .setDescription("Subscribe to presence updates for a user")
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The user to subscribe to")
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName("unsubscribe")
-    .setDescription("Unsubscribe from presence updates for a user")
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The user to unsubscribe from")
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName("status")
-    .setDescription("Get current status of the bot"),
-
-  new SlashCommandBuilder()
-    .setName("kv")
-    .setDescription("Manage key-value pairs")
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("set")
-        .setDescription("Set a key-value pair")
-        .addStringOption((option) =>
-          option
-            .setName("key")
-            .setDescription("The key to set")
-            .setRequired(true),
-        )
-        .addStringOption((option) =>
-          option
-            .setName("value")
-            .setDescription("The value to set")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("get")
-        .setDescription("Get a value by key")
-        .addStringOption((option) =>
-          option
-            .setName("key")
-            .setDescription("The key to get")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("delete")
-        .setDescription("Delete a key-value pair")
-        .addStringOption((option) =>
-          option
-            .setName("key")
-            .setDescription("The key to delete")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand.setName("list").setDescription("List all key-value pairs"),
-    ),
-].map((command) => command.toJSON());
+  subscribeCommand,
+  unSubscribeCommand,
+  statusCommand,
+  kvCommand,
+];
 
 export async function handleCommand(
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction
 ): Promise<void> {
-  const userId = interaction.user.id;
-
   switch (interaction.commandName) {
-    case "subscribe": {
-      const user = interaction.options.getUser("user");
-      if (!user) {
-        await interaction.reply("Please specify a valid user");
-        return;
-      }
-
-      const monitoredUsers = process.env.MONITORED_USERS?.split(",") || [];
-      if (!monitoredUsers.includes(user.id)) {
-        monitoredUsers.push(user.id);
-        process.env.MONITORED_USERS = monitoredUsers.join(",");
-        await interaction.reply(`Now monitoring ${user.username}`);
-      } else {
-        await interaction.reply(`Already monitoring ${user.username}`);
-      }
+    case "subscribe":
+      await handleSubscribe(interaction);
       break;
-    }
 
-    case "unsubscribe": {
-      const user = interaction.options.getUser("user");
-      if (!user) {
-        await interaction.reply("Please specify a valid user");
-        return;
-      }
-
-      const monitoredUsers = process.env.MONITORED_USERS?.split(",") || [];
-      const index = monitoredUsers.indexOf(user.id);
-      if (index > -1) {
-        monitoredUsers.splice(index, 1);
-        process.env.MONITORED_USERS = monitoredUsers.join(",");
-        await interaction.reply(`Stopped monitoring ${user.username}`);
-      } else {
-        await interaction.reply(`Was not monitoring ${user.username}`);
-      }
+    case "unsubscribe":
+      await handleUnsubscribe(interaction);
       break;
-    }
 
-    case "status": {
-      const monitoredUsers = process.env.MONITORED_USERS?.split(",") || [];
-      const userCount = monitoredUsers.length;
-      const uptime = Math.floor(process.uptime());
-
-      const embed = new EmbedBuilder()
-        .setTitle("Lanyard Status")
-        .addFields([
-          {
-            name: "Monitored Users",
-            value: userCount.toString(),
-            inline: true,
-          },
-          {
-            name: "Uptime",
-            value: `${uptime}s`,
-            inline: true,
-          },
-        ])
-        .setColor("#00ff00" as ColorResolvable)
-        .setTimestamp();
-
-      await interaction.reply({ embeds: [embed] });
+    case "status":
+      await handleStatus(interaction);
       break;
-    }
 
     case "kv": {
       const subcommand = interaction.options.getSubcommand();
-
       switch (subcommand) {
-        case "set": {
-          const key = interaction.options.getString("key", true);
-          const value = interaction.options.getString("value", true);
-
-          await store.setKV(userId, key, value);
-          await interaction.reply(`Set ${key}=${value}`);
+        case "set":
+          await handleKVSet(interaction);
           break;
-        }
 
-        case "get": {
-          const key = interaction.options.getString("key", true);
-          const presence = await store.getPresence(userId);
-          const kv = presence?.kv || {};
-
-          if (kv[key]) {
-            await interaction.reply(`${key}=${kv[key]}`);
-          } else {
-            await interaction.reply(`Key "${key}" not found`);
-          }
+        case "get":
+          await handleKVGet(interaction);
           break;
-        }
 
-        case "delete": {
-          const key = interaction.options.getString("key", true);
-          const presence = await store.getPresence(userId);
-
-          if (presence?.kv) {
-            delete presence.kv[key];
-            await store.setPresence(userId, presence);
-            await interaction.reply(`Deleted key "${key}"`);
-          } else {
-            await interaction.reply(`Key "${key}" not found`);
-          }
+        case "delete":
+          await handleKVDelete(interaction);
           break;
-        }
 
-        case "list": {
-          const presence = await store.getPresence(userId);
-          const kv = presence?.kv || {}; // Ensure kv is an object
-
-          if (Object.keys(kv).length > 0) {
-            const kvList = Object.entries(kv)
-              .map(([key, value]) => `${key}=${value}`)
-              .join("\n");
-            await interaction.reply(
-              `Key-Value pairs:\n\`\`\`\n${kvList}\n\`\`\``,
-            );
-          } else {
-            await interaction.reply("No key-value pairs found");
-          }
+        case "list":
+          await handleKVList(interaction);
           break;
-        }
+
+        default:
+          await interaction.reply("Unknown KV subcommand");
+          break;
       }
+      break;
     }
+
+    default:
+      await interaction.reply("Unknown command");
+      break;
   }
 }

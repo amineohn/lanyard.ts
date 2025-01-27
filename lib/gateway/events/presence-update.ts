@@ -20,7 +20,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
 
   try {
     const spotifyActivity = data.activities.find(
-      (activity) => activity.type === 2,
+      (activity) => activity.type === 2
     ) as Activity | undefined;
 
     const spotify = spotifyActivity
@@ -37,7 +37,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
 
     // Get existing presence and user data
     const [existingPresence, user] = await Promise.all([
-      store.getPresence(userId),
+      store.get(userId),
       client.users.fetch(userId),
     ]);
 
@@ -75,7 +75,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       badges: badges,
       discord_status: status,
       activities: data.activities.filter(
-        (activity) => activity.type !== 2,
+        (activity) => activity.type !== 2
       ) as Activity[],
       listening_to_spotify: !!spotifyActivity,
       spotify: spotify,
@@ -85,10 +85,10 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       kv: existingPresence?.kv ?? {},
     } satisfies LanyardData;
 
-    await store.setPresence(userId, presence);
+    await store.set(userId, presence);
   } catch (error) {
     Logger.error(
-      `Error updating presence for user ${userId}: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Error updating presence for user ${userId}: ${error instanceof Error ? error.message : "Unknown error"}`
     );
     throw error;
   }

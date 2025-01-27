@@ -4,7 +4,7 @@ import { config } from "@/utils/config";
 import { Logger } from "@/utils/logger";
 import { GatewayPayload } from "@/types/lanyard";
 
-const DISCORD_GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json"; 
+const DISCORD_GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
 
 export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;
