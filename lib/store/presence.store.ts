@@ -41,7 +41,7 @@ class PresenceStore {
     this.subscribers.add(callback);
   }
 
-  async userExists(userId: string): Promise<boolean> {
+  async exists(userId: string): Promise<boolean> {
     return (await this.client.exists(`presence:${userId}`)) === 1;
   }
 
@@ -52,7 +52,7 @@ class PresenceStore {
   }
 
   async add(userId: string, initialPresence: LanyardData): Promise<void> {
-    if (await this.userExists(userId)) {
+    if (await this.exists(userId)) {
       throw new Error(`User ${userId} already exists`);
     }
     await this.set(userId, initialPresence);
