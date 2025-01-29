@@ -1,5 +1,5 @@
 import { config } from "#/utils/config";
-import { client } from "#/discord/client";
+import { client } from "#/bot/client";
 import type { Activity, DiscordUser, LanyardData } from "#/types/lanyard";
 import { store } from "#/store/presence.store";
 import {

@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from "discord.js";
-import { kvSetSubcommand } from "#/discord/bot/commands/kv/set";
-import { kvGetSubcommand } from "#/discord/bot/commands/kv/get";
-import { kvDeleteSubcommand } from "#/discord/bot/commands/kv/delete";
-import { kvListSubcommand } from "#/discord/bot/commands/kv/list";
+import { kvSetSubcommand } from "#/bot/commands/kv/set";
+import { kvGetSubcommand } from "#/bot/commands/kv/get";
+import { kvDeleteSubcommand } from "#/bot/commands/kv/delete";
+import { kvListSubcommand } from "#/bot/commands/kv/list";
 
 export const kvCommand = new SlashCommandBuilder()
   .setName("kv")

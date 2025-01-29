@@ -1,4 +1,4 @@
-import { client } from "#/discord/client";
+import { client } from "#/bot/client";
 import { config } from "#/utils/config";
 import { Logger } from "#/utils/logger";
 import { server } from "#/api/server";
