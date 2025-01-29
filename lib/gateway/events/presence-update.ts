@@ -27,13 +27,13 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       ? parseSpotifyActivity(spotifyActivity)
       : null;
 
-    if (!spotifyActivity) {
-      return;
-    }
+    const now = Date.now();
+    const isCurrentlyPlaying =
+      spotify?.timestamps &&
+      now >= spotify.timestamps.start &&
+      now <= spotify.timestamps.end;
 
-    if (!spotify?.track_id) {
-      return;
-    }
+    const listeningToSpotify = !!spotify && isCurrentlyPlaying;
 
     // Get existing presence and user data
     const [existingPresence, user] = await Promise.all([
@@ -77,8 +77,8 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       activities: data.activities.filter(
         (activity) => activity.type !== 2
       ) as Activity[],
-      listening_to_spotify: !!spotifyActivity,
-      spotify: spotify,
+      listening_to_spotify: listeningToSpotify,
+      spotify: listeningToSpotify ? spotify : null,
       active_on_discord_web: activeOnDiscord.web,
       active_on_discord_desktop: activeOnDiscord.desktop,
       active_on_discord_mobile: activeOnDiscord.mobile,
