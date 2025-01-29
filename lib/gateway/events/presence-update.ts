@@ -1,20 +1,48 @@
 import { config } from "@/utils/config";
 import { client } from "@/discord/client";
-import { Activity, DiscordUser, LanyardData } from "@/types/lanyard";
+import type { Activity, DiscordUser, LanyardData } from "@/types/lanyard";
 import { store } from "@/store/presence.store";
-import { PresenceUpdateReceiveStatus, UserFlagsBitField } from "discord.js";
+import {
+  type PresenceUpdateReceiveStatus,
+  UserFlagsBitField,
+} from "discord.js";
 import { Logger } from "@/utils/logger";
-import { GatewayPresenceUpdate } from "discord-api-types/payloads/v10/gateway";
+import type { GatewayPresenceUpdate } from "discord-api-types/payloads/v10/gateway";
 import { parseSpotifyActivity } from "@/utils/parse-spotify-activity";
 import { resolveUserFlags } from "@/utils/resolve-user-flags";
 
-/**
- * Handles Discord presence updates for monitored users
- * @param data The presence update data from Discord gateway
- */
+function isUserMonitored(userId: string): boolean {
+  return (
+    config.discord.monitoredUsers.length === 0 ||
+    config.discord.monitoredUsers.includes(userId)
+  );
+}
+
+function createDiscordUser(user: DiscordUser) {
+  return {
+    id: user.id ?? "",
+    bot: user.bot,
+    avatar: user.avatar ?? "",
+    username: user.username ?? "",
+    avatar_decoration_data: null,
+    discriminator: user.discriminator ?? "",
+    globalName: user.globalName ?? "",
+    flags: user.flags || new UserFlagsBitField(0),
+  };
+}
+
+function isActiveOnPlatform(status?: PresenceUpdateReceiveStatus): boolean {
+  return (
+    status === "online" ||
+    status === "idle" ||
+    status === "dnd" ||
+    status === "offline"
+  );
+}
+
 export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
   const userId = data.user?.id;
-  if (!userId || !config.discord.monitoredUsers.includes(userId)) {
+  if (!userId || !isUserMonitored(userId)) {
     return;
   }
 
@@ -22,7 +50,6 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
     const spotifyActivity = data.activities.find(
       (activity) => activity.type === 2
     ) as Activity | undefined;
-
     const spotify = spotifyActivity
       ? parseSpotifyActivity(spotifyActivity)
       : null;
@@ -41,25 +68,8 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       client.users.fetch(userId),
     ]);
 
-    const flags = user.flags || new UserFlagsBitField(0);
-    const badges = resolveUserFlags(flags.bitfield);
-
-    const discordUser = {
-      id: user.id ?? "",
-      bot: user.bot,
-      avatar: user.avatar ?? "",
-      username: user.username ?? "",
-      avatar_decoration_data: null,
-      discriminator: user.discriminator ?? "",
-      globalName: user.globalName ?? "",
-      flags: flags,
-    } satisfies DiscordUser;
-
-    const isActiveOnPlatform = (status?: PresenceUpdateReceiveStatus) =>
-      status === "online" ||
-      status === "idle" ||
-      status === "dnd" ||
-      status === "offline";
+    const discordUser = createDiscordUser(user);
+    const badges = resolveUserFlags(discordUser.flags.bitfield);
 
     const status = data.status as "online" | "idle" | "dnd" | "invisible";
     const clientStatus = data.client_status || {};
@@ -85,11 +95,15 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
       kv: existingPresence?.kv ?? {},
     } satisfies LanyardData;
 
-    await store.set(userId, presence);
+    if (!existingPresence) {
+      Logger.info(`Adding new user ${userId} to presence store`);
+      await store.addUser(userId, presence);
+    } else {
+      await store.set(userId, presence);
+    }
   } catch (error) {
     Logger.error(
       `Error updating presence for user ${userId}: ${error instanceof Error ? error.message : "Unknown error"}`
     );
-    throw error;
   }
 }

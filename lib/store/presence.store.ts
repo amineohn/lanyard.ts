@@ -41,10 +41,21 @@ class PresenceStore {
     this.subscribers.add(callback);
   }
 
+  async userExists(userId: string): Promise<boolean> {
+    return (await this.client.exists(`presence:${userId}`)) === 1;
+  }
+
   async unsubscribe(
     callback: (userId: string, presence: LanyardData) => void
   ): Promise<void> {
     this.subscribers.delete(callback);
+  }
+
+  async addUser(userId: string, initialPresence: LanyardData): Promise<void> {
+    if (await this.userExists(userId)) {
+      throw new Error(`User ${userId} already exists`);
+    }
+    await this.set(userId, initialPresence);
   }
 
   private notifySubscribers(userId: string, presence: LanyardData) {
