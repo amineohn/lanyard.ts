@@ -1,15 +1,15 @@
-import { config } from "@/utils/config";
-import { client } from "@/discord/client";
-import type { Activity, DiscordUser, LanyardData } from "@/types/lanyard";
-import { store } from "@/store/presence.store";
+import { config } from "#/utils/config";
+import { client } from "#/discord/client";
+import type { Activity, DiscordUser, LanyardData } from "#/types/lanyard";
+import { store } from "#/store/presence.store";
 import {
   type PresenceUpdateReceiveStatus,
   UserFlagsBitField,
 } from "discord.js";
-import { Logger } from "@/utils/logger";
+import { Logger } from "#/utils/logger";
 import type { GatewayPresenceUpdate } from "discord-api-types/payloads/v10/gateway";
-import { parseSpotifyActivity } from "@/utils/parse-spotify-activity";
-import { resolveUserFlags } from "@/utils/resolve-user-flags";
+import { parseSpotifyActivity } from "#/utils/parse-spotify-activity";
+import { resolveUserFlags } from "#/utils/resolve-user-flags";
 
 function isUserMonitored(userId: string): boolean {
   return (

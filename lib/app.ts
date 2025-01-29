@@ -1,7 +1,7 @@
-import { client } from "@/discord/client";
-import { config } from "@/utils/config";
-import { Logger } from "@/utils/logger";
-import { server } from "@/api/server";
+import { client } from "#/discord/client";
+import { config } from "#/utils/config";
+import { Logger } from "#/utils/logger";
+import { server } from "#/api/server";
 
 async function main() {
   try {

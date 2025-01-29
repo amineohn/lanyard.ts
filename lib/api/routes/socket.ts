@@ -1,5 +1,5 @@
-import { LanyardData } from "@/types/lanyard";
-import { store } from "@/store/presence.store";
+import { LanyardData } from "#/types/lanyard";
+import { store } from "#/store/presence.store";
 import { FastifyInstance } from "fastify";
 
 export function websocketRoutes(fastify: FastifyInstance) {

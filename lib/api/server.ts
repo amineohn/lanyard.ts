@@ -1,9 +1,9 @@
 import Fastify, { FastifyInstance } from "fastify";
 import fastifyWebsocket from "@fastify/websocket";
-import { presenceRoutes } from "@/api/routes/presence";
-import { healthRoutes } from "@/api/routes/health";
-import { rootRoutes } from "@/api/routes/root";
-import { websocketRoutes } from "@/api/routes/socket";
+import { presenceRoutes } from "#/api/routes/presence";
+import { healthRoutes } from "#/api/routes/health";
+import { rootRoutes } from "#/api/routes/root";
+import { websocketRoutes } from "#/api/routes/socket";
 
 export function createServer(): FastifyInstance {
   const fastify = Fastify({

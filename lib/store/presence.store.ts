@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
-import { config } from "@/utils/config";
-import { LanyardData } from "@/types/lanyard";
+import { config } from "#/utils/config";
+import { LanyardData } from "#/types/lanyard";
 
 class PresenceStore {
   private client: RedisClientType;

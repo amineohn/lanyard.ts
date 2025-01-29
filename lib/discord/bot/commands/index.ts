@@ -1,17 +1,17 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { subscribeCommand } from "@/discord/bot/commands/subscribe";
-import { unSubscribeCommand } from "@/discord/bot/commands/un-subscribe";
-import { statusCommand } from "@/discord/bot/commands/status";
-import { kvCommand } from "@/discord/bot/commands/kv";
+import { subscribeCommand } from "#/discord/bot/commands/subscribe";
+import { unSubscribeCommand } from "#/discord/bot/commands/un-subscribe";
+import { statusCommand } from "#/discord/bot/commands/status";
+import { kvCommand } from "#/discord/bot/commands/kv";
 
-import { handleSubscribe } from "@/discord/bot/commands/handlers/subscribe";
-import { handleUnsubscribe } from "@/discord/bot/commands/handlers/un-subscribe";
-import { handleStatus } from "@/discord/bot/commands/handlers/status";
-import { handleKVSet } from "@/discord/bot/commands/handlers/kv/set";
-import { handleKVDelete } from "@/discord/bot/commands/handlers/kv/delete";
-import { handleKVGet } from "@/discord/bot/commands/handlers/kv/get";
-import { handleKVList } from "@/discord/bot/commands/handlers/kv/list";
+import { handleSubscribe } from "#/discord/bot/commands/handlers/subscribe";
+import { handleUnsubscribe } from "#/discord/bot/commands/handlers/un-subscribe";
+import { handleStatus } from "#/discord/bot/commands/handlers/status";
+import { handleKVSet } from "#/discord/bot/commands/handlers/kv/set";
+import { handleKVDelete } from "#/discord/bot/commands/handlers/kv/delete";
+import { handleKVGet } from "#/discord/bot/commands/handlers/kv/get";
+import { handleKVList } from "#/discord/bot/commands/handlers/kv/list";
 
 export const commands = [
   subscribeCommand,

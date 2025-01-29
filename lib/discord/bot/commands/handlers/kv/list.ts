@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction } from "discord.js";
-import { store } from "@/store/presence.store";
+import { store } from "#/store/presence.store";
 
 export async function handleKVList(interaction: ChatInputCommandInteraction) {
   const userId = interaction.user.id;

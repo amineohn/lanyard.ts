@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction } from "discord.js";
-import { store } from "@/store/presence.store";
+import { store } from "#/store/presence.store";
 
 export async function handleKVSet(interaction: ChatInputCommandInteraction) {
   const key = interaction.options.getString("key", true);

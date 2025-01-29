@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
-import { config } from "@/utils/config";
-import { store } from "@/store/presence.store";
-import { Logger } from "@/utils/logger";
+import { config } from "#/utils/config";
+import { store } from "#/store/presence.store";
+import { Logger } from "#/utils/logger";
 
 export async function handleSubscribe(
   interaction: ChatInputCommandInteraction

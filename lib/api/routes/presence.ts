@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyReply } from "fastify";
-import { store } from "@/store/presence.store";
-import { Logger } from "@/utils/logger";
+import { store } from "#/store/presence.store";
+import { Logger } from "#/utils/logger";
 
 interface KVRequestBody {
   key: string;
