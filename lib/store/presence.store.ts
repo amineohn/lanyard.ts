@@ -51,7 +51,7 @@ class PresenceStore {
     this.subscribers.delete(callback);
   }
 
-  async addUser(userId: string, initialPresence: LanyardData): Promise<void> {
+  async add(userId: string, initialPresence: LanyardData): Promise<void> {
     if (await this.userExists(userId)) {
       throw new Error(`User ${userId} already exists`);
     }

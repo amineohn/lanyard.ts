@@ -97,7 +97,7 @@ export async function handlePresenceUpdate(data: GatewayPresenceUpdate) {
 
     if (!existingPresence) {
       Logger.info(`Adding new user ${userId} to presence store`);
-      await store.addUser(userId, presence);
+      await store.add(userId, presence);
     } else {
       await store.set(userId, presence);
     }
