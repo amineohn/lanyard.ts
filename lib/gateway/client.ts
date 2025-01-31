@@ -10,7 +10,7 @@ export class GatewayClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private sessionId: string | null = null;
   private sequence: number | null = null;
-  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
   private rateLimited = false;
 
